@@ -6,7 +6,7 @@ function(input, output, session) {
   US_reactive <- reactive({
   ks18%>%filter(region == "United States")%>%filter(goal<input$goal_range_ID, state==input$state_ID)
   })
-  
+  #Leaflet output of world map
   output$worldmap_plotID<-renderLeaflet({
     leaflet(bycountry) %>% 
       addProviderTiles("Esri.NatGeoWorldMap")%>%addCircleMarkers(~longitude,~latitude,
@@ -15,13 +15,13 @@ function(input, output, session) {
                                    fillOpacity = 0.3)
   })
   
-  
-  output$US_plotID<- renderPlotly({
+  #ggplotly output of goal distribution
+  output$US_goal_ID<- renderPlotly({
     plotdraft<-US_reactive()%>%
       ggplot(aes(x=goal))+geom_histogram(binwidth = input$binwidth_ID)
  ggplotly(plotdraft)})
-  
-  output$event<-renderPrint({
+  #ggplotly text under goal distribution
+  output$US_goal_text_ID<-renderPrint({
     d<-event_data("plotly_hover")
     if (is.null(d)) "Hover on a point!" else d
   })

@@ -1,12 +1,15 @@
 
-
+        #name of the project
 navbarPage("KickStater",
-           tabPanel("World Map",
+            #name of the tab
+           tabPanel("World Map", 
                     fluidPage(
                       leafletOutput("worldmap_plotID")
                     )
-           ),
-           tabPanel("United States",
+           ),#Create a main tab of United Staes 
+           navbarMenu("United States",
+                        #sub panel under United States
+              tabPanel("Fund Amount",
                     sidebarLayout(
                       sidebarPanel(
                         radioButtons(inputId="state_ID", label="State of the project",
@@ -22,10 +25,36 @@ navbarPage("KickStater",
                                     min=0,max=10000,value=500)
                         ),
                       mainPanel(
+                        plotlyOutput("US_goal_ID"),
+                        verbatimTextOutput("US_goal_text_ID")
+                      )
+                    )
+           ),
+              tabPanel("Category Distribution",
+                    sidebarLayout(
+                      sidebarPanel(
+                        radioButtons(inputId="state_ID", label="State of the project",
+                                     choices= c("failed"="failed", "success"="successful",
+                                                "cancelled"="canceled","live"="live",
+                                                "undefined"="undefined","suspened"="suspended")
+                        ),
+                        sliderInput(inputId = "goal_range_ID",
+                                    label = "Choose a goal range",
+                                    min=0,max=200000,value=10000),
+                        sliderInput(inputId = "binwidth_ID",
+                                    label = "Choose a binwidth",
+                                    min=0,max=10000,value=500)
+                      ),
+                      mainPanel(
                         plotlyOutput("US_plotID"),
                         verbatimTextOutput("event")
                       )
                     )
+           )
+           
+           
+           
+           
            ),
            tabPanel("Rest of the world",
                     sidebarLayout(
