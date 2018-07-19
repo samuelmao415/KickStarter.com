@@ -39,10 +39,10 @@ navbarPage("KickStater",
                       )
                     )
            ),
+           tabPanel("Data",
+                    DT::dataTableOutput("tableID")
+           ),
            navbarMenu("More",
-                      tabPanel("Table",
-                               DT::dataTableOutput("table")
-                      ),
                       tabPanel("About",
                                fluidRow(
                                  column(6,

@@ -30,7 +30,7 @@ function(input, output, session) {
     summary(cars)
   })
   
-  output$table <- DT::renderDataTable({
-    DT::datatable(cars)
+  output$tableID <- DT::renderDataTable({
+    DT::datatable(ks18)
   })
 }
