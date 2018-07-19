@@ -4,7 +4,7 @@ function(input, output, session) {
   
   
   US_reactive <- reactive({
-  ks18%>%filter(region == "United States") 
+  ks18%>%filter(region == "United States")%>%filter(goal<input$goal_range_ID, state==input$state_ID)
   })
   
   output$worldmap_plotID<-renderLeaflet({
@@ -16,9 +16,14 @@ function(input, output, session) {
   })
   
   
-  output$US_plotID<- renderPlot({
-    US_reactive()%>%filter(goal<input$goal_range_ID, state==input$state_ID)%>%
+  output$US_plotID<- renderPlotly({
+    plotdraft<-US_reactive()%>%
       ggplot(aes(x=goal))+geom_histogram(binwidth = input$binwidth_ID)
+ ggplotly(plotdraft)})
+  
+  output$event<-renderPrint({
+    d<-event_data("plotly_hover")
+    if (is.null(d)) "Hover on a point!" else d
   })
   
   output$summary <- renderPrint({

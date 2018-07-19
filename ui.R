@@ -16,13 +16,14 @@ navbarPage("KickStater",
                         ),
                         sliderInput(inputId = "goal_range_ID",
                                        label = "Choose a goal range",
-                                       min=0,max=100000,value=10000),
+                                       min=0,max=200000,value=10000),
                         sliderInput(inputId = "binwidth_ID",
                                     label = "Choose a binwidth",
-                                    min=0,max=100000,value=1000)
+                                    min=0,max=10000,value=500)
                         ),
                       mainPanel(
-                        plotOutput("US_plotID")
+                        plotlyOutput("US_plotID"),
+                        verbatimTextOutput("event")
                       )
                     )
            ),
