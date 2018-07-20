@@ -13,41 +13,36 @@ navbarPage("KickStater",
                     sidebarLayout(
                       sidebarPanel(
                         radioButtons(inputId="state_ID", label="State of the project",
-                                    choices= c("failed"="failed", "success"="successful",
+                                    choices= c("All"="All","failed"="failed", "success"="successful",
                                        "cancelled"="canceled","live"="live",
-                                       "undefined"="undefined","suspened"="suspended")
+                                       "undefined"="undefined","suspened"="suspended"
+                                       )
                         ),
                         sliderInput(inputId = "goal_range_ID",
                                        label = "Choose a goal range",
-                                       min=0,max=200000,value=10000),
+                                       min=0,max=300000,value=10000),
                         sliderInput(inputId = "binwidth_ID",
                                     label = "Choose a binwidth",
                                     min=0,max=10000,value=500)
                         ),
                       mainPanel(
                         plotlyOutput("US_goal_ID"),
-                        verbatimTextOutput("US_goal_text_ID")
+                        verbatimTextOutput("summary_ID")
                       )
                     )
            ),
+           #category distribution tab that returns a bar plot
               tabPanel("Category Distribution",
                     sidebarLayout(
                       sidebarPanel(
-                        radioButtons(inputId="state_ID", label="State of the project",
-                                     choices= c("failed"="failed", "success"="successful",
-                                                "cancelled"="canceled","live"="live",
-                                                "undefined"="undefined","suspened"="suspended")
-                        ),
-                        sliderInput(inputId = "goal_range_ID",
-                                    label = "Choose a goal range",
-                                    min=0,max=200000,value=10000),
-                        sliderInput(inputId = "binwidth_ID",
-                                    label = "Choose a binwidth",
-                                    min=0,max=10000,value=500)
+                        sliderInput(inputId = "category_observation_ID",
+                                    label = "Choose a category number threshold",
+                                    min=0,max=15000,value=1000)
+                        
                       ),
                       mainPanel(
-                        plotlyOutput("US_plotID"),
-                        verbatimTextOutput("event")
+                        plotlyOutput("US_category_ID")
+                        
                       )
                     )
            )

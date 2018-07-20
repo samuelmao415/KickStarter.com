@@ -6,6 +6,7 @@ library(ggplot2)
 library(plotly)
 library(markdown)
 library(leaflet)
+library(shinydashboard)
 #setwd("C:/Users/samuelmao/Desktop/DataScience/Project1/Project1")
 #read data into global.R
 ks18<-fread(file = "./ks18.csv",sep = ',',fill=TRUE)
