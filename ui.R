@@ -1,12 +1,13 @@
 
         #name of the project
 navbarPage("KickStater",
-            #name of the tab
+            #####name of the tab
            tabPanel("World Map", 
                     fluidPage(
                       leafletOutput("worldmap_plotID")
                     )
-           ),#Create a main tab of United Staes 
+           ),
+           ####Create a main tab of United Staes 
            navbarMenu("United States",
                         #sub panel under United States
               tabPanel("Fund Amount",
@@ -16,7 +17,7 @@ navbarPage("KickStater",
                                     choices= c("All"="All","failed"="failed", "success"="successful",
                                        "cancelled"="canceled","live"="live",
                                        "undefined"="undefined","suspened"="suspended"
-                                       )
+                                       ), selected = "successful"
                         ),
                         sliderInput(inputId = "goal_range_ID",
                                        label = "Choose a goal range",
@@ -28,31 +29,68 @@ navbarPage("KickStater",
                         ),
                       mainPanel(
                         plotlyOutput("US_goal_ID"),
-                        
-                        dataTableOutput("US_tableID")
+                        fluidPage(
+                        DT::dataTableOutput("US_tableID"))
                       )
                     )
            ),
-           #category distribution tab that returns a bar plot
+          ###category distribution tab that returns a bar plot
               tabPanel("Category Distribution",
                     sidebarLayout(
                       sidebarPanel(
+                        radioButtons(inputId="category_state_ID", label="State of the project",
+                                     choices= c("All"="All","failed"="failed", "success"="successful",
+                                                "cancelled"="canceled","live"="live",
+                                                "undefined"="undefined","suspened"="suspended"
+                                     ), selected = "successful"
+                        ),
                         sliderInput(inputId = "category_observation_ID",
                                     label = "Choose a category number threshold",
-                                    min=0,max=15000,value=1000)
+                                    min=0,max=15000,value=3000)
                         
                       ),
                       mainPanel(
                         plotlyOutput("US_category_ID")
-                        
-                      )
-                    )
-           )
-           
-           
-           
-           
-           ),
+                        #DT::dataTableOutput("US_category_tableID")
+                        )),
+                    DT::dataTableOutput("US_category_tableID")
+                    ),
+          ####backers analysis########
+          tabPanel("Backers Distribution",
+                   sidebarLayout(
+                     sidebarPanel(
+                       radioButtons(inputId="backers_state_ID", label="State of the project",
+                                    choices= c("All"="All","failed"="failed", "success"="successful",
+                                               "cancelled"="canceled","live"="live",
+                                               "undefined"="undefined","suspened"="suspended"
+                                    ), selected = "successful"
+                       )),
+                     mainPanel(
+                       fluidPage(
+                         plotlyOutput("US_backers_ID")
+                         #DT::dataTableOutput("US_category_tableID")
+                       )
+                     )
+           )),
+          
+          tabPanel("Almost 'Made IT' Project",
+                   sidebarLayout(
+                     sidebarPanel(
+                       sliderInput(inputId="prop_max_ID", label="Choose the max of failure",
+                                   min=0, max=1, value=0.9),
+                       sliderInput(inputId="prop_min_ID", label="Choose the base of failure",
+                                   min=0, max=1, value=0.5)
+                     ),
+                     mainPanel(
+                       fluidPage(
+                         DT::dataTableOutput("US_almost_made_it_ID")
+                       )
+                     )
+                   )
+            
+          )),
+          
+          
            tabPanel("Rest of the world",
                     sidebarLayout(
                       sidebarPanel(
@@ -90,4 +128,4 @@ navbarPage("KickStater",
                                )
                       )
            )
-)
+          )

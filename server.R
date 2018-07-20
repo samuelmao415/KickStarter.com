@@ -2,11 +2,11 @@
 
 function(input, output, session) {
   
-  ####data for US tab with united stated selected
+  ####data for US tab with united stated selected#########################################
   US_reactive <- reactive({
   ks18%>%filter(region == "United States")})
   
-  ####Leaflet output of world map
+  ####Leaflet output of world map#######################################################
   output$worldmap_plotID<-renderLeaflet({
     leaflet(bycountry) %>% 
       addProviderTiles("Esri.NatGeoWorldMap")%>%addCircleMarkers(~longitude,~latitude,
@@ -33,26 +33,71 @@ function(input, output, session) {
     summary(dataset)
   })
   #selected data table given state of the project and the goal
-  output$US_tableID <-renderDataTable({
-    US_reactive()%>% {if(input$state_ID!="All") filter(.,state==input$state_ID,
+  output$US_tableID <-DT::renderDataTable({
+    datatable_goal<-US_reactive()%>% {if(input$state_ID!="All") filter(.,state==input$state_ID,
                         goal<input$goal_range_ID) else 
                        filter(.,goal<input$goal_range_ID)}%>%
-      select(ID,name,category,state,goal)%>%sample_n(size=10)
+      select(ID,name,category,state,goal)
+    DT::datatable(datatable_goal)
   })
 
-  ####category observations
+  ####category observations######################################################
+  #plot histogram for each category given the state of the project and selected observation
   output$US_category_ID<- renderPlotly({
-  plotdraft2<-US_reactive()%>%group_by(category)%>%summarize(num=n())%>%
+  plotdraft2<-US_reactive()%>%
+  {if(input$category_state_ID=="All") . else filter(.,state==input$category_state_ID)}%>%
+    group_by(category)%>%
+    summarize(num=n())%>%
     filter(num>input$category_observation_ID)%>%
     ggplot(aes(reorder(x=category,-num),y=num))+
     geom_bar(stat="identity")
   ggplotly(plotdraft2)
   })
   
+  #selected data table given state of the project and the category
+  output$US_category_tableID <-DT::renderDataTable({
+    datatable_category<-US_reactive()%>%group_by(category)%>%
+      mutate(num=n())%>%
+      {if(input$category_state_ID!="All") filter(.,state==input$category_state_ID,
+                                                                num>input$category_observation_ID) else 
+                                                         filter(.,num>input$category_observation_ID)}%>%
+      select(ID,name,category,state,goal)
+    
+    DT::datatable(datatable_category)
+  })
+  
+  #####Backers Analysis############################################################
+  
+  output$US_backers_ID<- renderPlotly({
+    plotdraft3<-US_reactive()%>%
+    {if(input$backers_state_ID=="All") . else filter(.,state==input$backers_state_ID)}%>%
+      group_by(state)%>%
+      summarize(number_of_backers=mean(backers))%>%
+      ggplot(aes(reorder(x=state,-number_of_backers),y=number_of_backers))+
+      geom_bar(stat="identity")
+    ggplotly(plotdraft3)
+  })
+  
+  
+  ###almost made it project#########################################################
+  output$US_almost_made_it_ID<-DT::renderDataTable({
+  datatable_almost<-US_reactive()%>%mutate(prop=pledged/goal)%>%
+    filter(prop<input$prop_max_ID, prop>input$prop_min_ID)%>%
+    select(ID,name,category,state,goal,prop)
+  
+  DT::datatable(datatable_almost)
+  })
+  
+  
+  
+  
+  
+  #############################################
   output$summary <- renderPrint({
     summary(cars)
   })
   
+  ####full dataset table###############################################################
   output$tableID <- DT::renderDataTable({
     DT::datatable(ks18)
   })
