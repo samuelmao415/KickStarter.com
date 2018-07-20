@@ -40,27 +40,26 @@ function(input, output, session) {
       select(ID,name,category,state,goal)
     DT::datatable(datatable_goal)
   })
+#####################################################
 
   ####category observations######################################################
   #plot histogram for each category given the state of the project and selected observation
   output$US_category_ID<- renderPlotly({
-  plotdraft2<-US_reactive()%>%
-  {if(input$category_state_ID=="All") . else filter(.,state==input$category_state_ID)}%>%
-    group_by(main_category)%>%
-    mutate(num=n())%>%
+  
+    plotdraft2<-US_reactive()%>%{if(input$category_state_ID=="All") . else filter(.,state==input$category_state_ID)}%>%
+    group_by(main_category,category)%>%summarize(num=n())%>%
     filter(num>input$category_observation_ID)%>%
-    ggplot(aes(x=reorder(main_category,-num),y=num,fill=category))+geom_bar(stat="identity")
+    ggplot(aes(x=reorder(main_category,-num),y=num, fill=category))+geom_bar(stat="identity")
+  
   ggplotly(plotdraft2)
   })
   
   #selected data table given state of the project and the category
   output$US_category_tableID <-DT::renderDataTable({
-    datatable_category<-US_reactive()%>%group_by(category)%>%
-      mutate(num=n())%>%
+    datatable_category<-US_reactive()%>%group_by(main_category,category)%>%mutate(num=n())%>%
       {if(input$category_state_ID!="All") filter(.,state==input$category_state_ID,
-                                                                num>input$category_observation_ID) else 
-                                                         filter(.,num>input$category_observation_ID)}%>%
-      select(ID,name,category,state,goal)
+                                                                num>input$category_observation_ID) else  .}%>%
+      select(ID,name,main_category,category,state,goal)
     
     DT::datatable(datatable_category)
   })
