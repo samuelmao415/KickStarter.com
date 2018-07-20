@@ -46,11 +46,10 @@ function(input, output, session) {
   output$US_category_ID<- renderPlotly({
   plotdraft2<-US_reactive()%>%
   {if(input$category_state_ID=="All") . else filter(.,state==input$category_state_ID)}%>%
-    group_by(category)%>%
-    summarize(num=n())%>%
+    group_by(main_category)%>%
+    mutate(num=n())%>%
     filter(num>input$category_observation_ID)%>%
-    ggplot(aes(reorder(x=category,-num),y=num))+
-    geom_bar(stat="identity")
+    ggplot(aes(x=reorder(main_category,-num),y=num,fill=category))+geom_bar(stat="identity")
   ggplotly(plotdraft2)
   })
   
@@ -87,9 +86,14 @@ function(input, output, session) {
   
   DT::datatable(datatable_almost)
   })
-  
-  
-  
+  ###extremley successful project#########################################################
+  output$US_successful_ID<-DT::renderDataTable({
+    datatable_successful<-US_reactive()%>%mutate(prop=pledged/goal)%>%
+      filter(prop>input$prop_success_max_ID)%>%
+      select(ID,name,category,state,goal,prop)
+    
+    DT::datatable(datatable_successful)
+  })
   
   
   #############################################

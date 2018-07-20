@@ -1,6 +1,6 @@
 
         #name of the project
-navbarPage("KickStater",
+navbarPage("KickStarter",
             #####name of the tab
            tabPanel("World Map", 
                     fluidPage(
@@ -72,7 +72,7 @@ navbarPage("KickStater",
                        )
                      )
            )),
-          
+          ####unsuccessful project: raised divided by goal#########################################
           tabPanel("Almost 'Made IT' Project",
                    sidebarLayout(
                      sidebarPanel(
@@ -88,8 +88,24 @@ navbarPage("KickStater",
                      )
                    )
             
-          )),
+          ),
           
+          ##extremely successful project###########################
+          tabPanel("Extremely Succesful Project",
+                   sidebarLayout(
+                     sidebarPanel(
+                       sliderInput(inputId="prop_success_max_ID", label="Choose the minimum of success",
+                                   min=1, max=2000, value=1.2)
+                 
+                     ),
+                     mainPanel(
+                       fluidPage(
+                         DT::dataTableOutput("US_successful_ID")
+                       )
+                     )
+                   )
+                   
+          )),
           
            tabPanel("Rest of the world",
                     sidebarLayout(
@@ -127,5 +143,5 @@ navbarPage("KickStater",
                                  )
                                )
                       )
-           )
-          )
+           ))
+          
