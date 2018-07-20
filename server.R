@@ -25,12 +25,20 @@ function(input, output, session) {
       ggplot(aes(x=goal))+geom_histogram(binwidth = input$binwidth_ID)
  ggplotly(plotdraft)})
 
-  #summary for goal
+  #summary for goal given state of the project
   output$summary_ID <- renderPrint({
-    dataset <- US_reactive()%>%select(goal)
+    dataset <- US_reactive()%>%
+      {if(input$state_ID!="All") filter(.,state==input$state_ID)else .}%>%
+      select("Summary information for the selected filter"=goal)
     summary(dataset)
   })
-  
+  #selected data table given state of the project and the goal
+  output$US_tableID <-renderDataTable({
+    US_reactive()%>% {if(input$state_ID!="All") filter(.,state==input$state_ID,
+                        goal<input$goal_range_ID) else 
+                       filter(.,goal<input$goal_range_ID)}%>%
+      select(ID,name,category,state,goal)%>%sample_n(size=10)
+  })
 
   ####category observations
   output$US_category_ID<- renderPlotly({

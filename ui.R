@@ -23,11 +23,13 @@ navbarPage("KickStater",
                                        min=0,max=300000,value=10000),
                         sliderInput(inputId = "binwidth_ID",
                                     label = "Choose a binwidth",
-                                    min=0,max=10000,value=500)
+                                    min=0,max=10000,value=500),
+                        verbatimTextOutput("summary_ID")
                         ),
                       mainPanel(
                         plotlyOutput("US_goal_ID"),
-                        verbatimTextOutput("summary_ID")
+                        
+                        dataTableOutput("US_tableID")
                       )
                     )
            ),
