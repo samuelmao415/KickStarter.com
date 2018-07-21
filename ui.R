@@ -166,7 +166,7 @@ navbarPage("KickStarter",
                                   ),
                                   sliderInput(inputId = "Rest_category_observation_ID",
                                               label = "Choose a category number threshold",
-                                              min=0,max=15000,value=3000)
+                                              min=0,max=2000,value=300)
                                   
                                 ),
                                 mainPanel(
@@ -231,13 +231,13 @@ navbarPage("KickStarter",
                                 # Sidebar with a slider and selection inputs
                                 sidebarPanel(
                                   selectInput("Rest_wordcloud_category_ID", "Choose a category:",
-                                              choices = unique(ks18$main_category)),
+                                              choices = unique(ks18%>%filter(region!="United States")%>%select(main_category))),
                                   sliderInput("Rest_freq_ID",
                                               "Minimum Frequency:",
-                                              min = 1,  max = 100, value = 20),
+                                              min = 1,  max = 50, value = 10),
                                   sliderInput("Rest_max_ID",
                                               "Maximum Number of Words:",
-                                              min = 1,  max = 300,  value = 100)
+                                              min = 1,  max = 200,  value = 100)
                                 ),
                                 
                                 # Show Word Cloud
