@@ -126,18 +126,128 @@ navbarPage("KickStarter",
                      )
                    ))),
           
-           tabPanel("Rest of the world",
-                    sidebarLayout(
-                      sidebarPanel(
-                        radioButtons("plotType", "Plot type",
-                                     c("Scatter"="p", "Line"="l")
-                        )
-                      ),
-                      mainPanel(
-                        plotOutput("rest_of_the_world_plotID")
-                      )
-                    )
-           ),
+          ########Rest of the world##################################################
+          ########Rest of the world##################################################
+          ########Rest of the world##################################################
+          navbarMenu("Rest of the world",
+                     tabPanel("Fund Amount",
+                              sidebarLayout(
+                                sidebarPanel(
+                                  radioButtons(inputId="Rest_state_ID", label="State of the project",
+                                               choices= c("All"="All","failed"="failed", "success"="successful",
+                                                          "cancelled"="canceled","live"="live",
+                                                          "undefined"="undefined","suspened"="suspended"
+                                               ), selected = "successful"
+                                  ),
+                                  sliderInput(inputId = "Rest_goal_range_ID",
+                                              label = "Choose a goal range",
+                                              min=0,max=300000,value=10000),
+                                  sliderInput(inputId = "binwidth_ID",
+                                              label = "Choose a binwidth",
+                                              min=0,max=10000,value=500),
+                                  verbatimTextOutput("Rest_summary_ID")
+                                ),
+                                mainPanel(
+                                  plotlyOutput("Rest_US_goal_ID"),
+                                  fluidPage(
+                                    DT::dataTableOutput("Rest_US_tableID"))
+                                )
+                              )
+                     ),
+                     ###category distribution tab that returns a bar plot
+                     tabPanel("Category Distribution",
+                              sidebarLayout(
+                                sidebarPanel(
+                                  radioButtons(inputId="Rest_category_state_ID", label="State of the project",
+                                               choices= c("All"="All","failed"="failed", "success"="successful",
+                                                          "cancelled"="canceled","live"="live",
+                                                          "undefined"="undefined","suspened"="suspended"
+                                               ), selected = "successful"
+                                  ),
+                                  sliderInput(inputId = "Rest_category_observation_ID",
+                                              label = "Choose a category number threshold",
+                                              min=0,max=15000,value=3000)
+                                  
+                                ),
+                                mainPanel(
+                                  plotlyOutput("Rest_US_category_ID")
+                                  #DT::dataTableOutput("US_category_tableID")
+                                )),
+                              DT::dataTableOutput("Rest_US_category_tableID")
+                     ),
+                     ####backers analysis########
+                     tabPanel("Backers Distribution",
+                              sidebarLayout(
+                                sidebarPanel(
+                                  radioButtons(inputId="Rest_backers_state_ID", label="State of the project",
+                                               choices= c("All"="All","failed"="failed", "success"="successful",
+                                                          "cancelled"="canceled","live"="live",
+                                                          "undefined"="undefined","suspened"="suspended"
+                                               ), selected = "successful"
+                                  )),
+                                mainPanel(
+                                  fluidPage(
+                                    plotlyOutput("Rest_US_backers_ID")
+                                    #DT::dataTableOutput("US_category_tableID")
+                                  )
+                                )
+                              )),
+                     ####unsuccessful project: raised divided by goal#########################################
+                     tabPanel("Almost 'Made IT' Project",
+                              sidebarLayout(
+                                sidebarPanel(
+                                  sliderInput(inputId="Rest_prop_max_ID", label="Choose the max of failure",
+                                              min=0, max=1, value=0.9),
+                                  sliderInput(inputId="Rest_prop_min_ID", label="Choose the base of failure",
+                                              min=0, max=1, value=0.5)
+                                ),
+                                mainPanel(
+                                  fluidPage(
+                                    DT::dataTableOutput("Rest_US_almost_made_it_ID")
+                                  )
+                                )
+                              )
+                              
+                     ),
+                     
+                     ##extremely successful project###########################
+                     tabPanel("Extremely Succesful Project",
+                              sidebarLayout(
+                                sidebarPanel(
+                                  sliderInput(inputId="Rest_prop_success_max_ID", label="Choose the minimum of success",
+                                              min=1, max=2000, value=1.2)
+                                  
+                                ),
+                                mainPanel(
+                                  fluidPage(
+                                    DT::dataTableOutput("Rest_US_successful_ID")
+                                  )
+                                )
+                              )
+                              
+                     ),
+                     tabPanel("Word Cloud",
+                              sidebarLayout(
+                                # Sidebar with a slider and selection inputs
+                                sidebarPanel(
+                                  selectInput("Rest_wordcloud_category_ID", "Choose a category:",
+                                              choices = unique(ks18$main_category)),
+                                  sliderInput("Rest_freq_ID",
+                                              "Minimum Frequency:",
+                                              min = 1,  max = 100, value = 20),
+                                  sliderInput("Rest_max_ID",
+                                              "Maximum Number of Words:",
+                                              min = 1,  max = 300,  value = 100)
+                                ),
+                                
+                                # Show Word Cloud
+                                mainPanel(
+                                  plotOutput("Rest_word_cloud_plot_ID")
+                                )
+                              )
+          )),
+          
+          ####################################################
            tabPanel("Data",
                     DT::dataTableOutput("tableID")
            ),

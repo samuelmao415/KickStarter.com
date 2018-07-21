@@ -144,12 +144,151 @@ function(input, output, session) {
   
   
   #####################################################################
+  #################Rest of the world####################################
+  ####data for US tab with united stated selected#########################################
+  Rest_US_reactive <- reactive({
+    isolate({
+      withProgress({
+        setProgress(message = "Processing my plot for you...")
+      })})
+    
+    ks18%>%filter(region != "United States")})
+  
+
+  
+  #ggplotly output of goal distribution
+  output$Rest_US_goal_ID<- renderPlotly({
+    Rest_plotdraft<-Rest_US_reactive()%>%
+      #add a "no-filter" option to the filter using ifelse statement
+    {if(input$Rest_state_ID!="All") filter(.,state==input$Rest_state_ID,
+                                      usd_goal_real<input$Rest_goal_range_ID) else 
+                                        filter(.,usd_goal_real<input$Rest_goal_range_ID)}%>%
+      ggplot(aes(x=usd_goal_real))+geom_histogram(binwidth = input$Rest_binwidth_ID)
+    ggplotly(Rest_plotdraft)})
+  
+  #summary for goal given state of the project
+  output$Rest_summary_ID <- renderPrint({
+    Rest_dataset <- Rest_US_reactive()%>%
+    {if(input$Rest_state_ID!="All") filter(.,state==input$Rest_state_ID)else .}%>%
+      select("Summary information for the selected filter"=goal)
+    summary(Rest_dataset)
+  })
+  #selected data table given state of the project and the goal
+  output$Rest_US_tableID <-DT::renderDataTable({
+    Rest_datatable_goal<-Rest_US_reactive()%>% {if(input$Rest_state_ID!="All") filter(.,state==input$Rest_state_ID,
+                                                                       usd_goal_real<input$goal_range_ID) else 
+                                                                         filter(.,usd_goal_real<input$goal_range_ID)}%>%
+      select(ID,name,category,state,usd_goal_real)
+    DT::datatable(Rest_datatable_goal)
+  })
+  #####################################################
+  
+  ####category observations######################################################
+  #plot histogram for each category given the state of the project and selected observation
+  output$Rest_US_category_ID<- renderPlotly({
+    
+    
+    Rest_plotdraft2<-Rest_US_reactive()%>%{if(input$Rest_category_state_ID=="All") . else filter(.,state==input$Rest_category_state_ID)}%>%
+      group_by(main_category,category)%>%summarize(num=n())%>%
+      filter(num>input$Rest_category_observation_ID)%>%
+      ggplot(aes(x=reorder(main_category,-num),y=num, fill=category))+geom_bar(stat="identity")
+    
+    ggplotly(Rest_plotdraft2)
+    
+  })
+  
+  #selected data table given state of the project and the category
+  output$Rest_US_category_tableID <-DT::renderDataTable({
+    Rest_datatable_category<-Rest_US_reactive()%>%group_by(main_category,category)%>%mutate(num=n())%>%
+    {if(input$Rest_category_state_ID!="All") filter(.,state==input$Rest_category_state_ID,
+                                               num>input$Rest_category_observation_ID) else  .}%>%
+      select(ID,name,main_category,category,state,goal)
+    
+    DT::datatable(Rest_datatable_category)
+  })
+  
+  #####Backers Analysis############################################################
+  
+  output$Rest_US_backers_ID<- renderPlotly({
+    Rest_plotdraft3<-Rest_US_reactive()%>%
+    {if(input$Rest_backers_state_ID=="All") . else filter(.,state==input$Rest_backers_state_ID)}%>%
+      group_by(state)%>%
+      summarize(number_of_backers=mean(backers))%>%
+      ggplot(aes(reorder(x=state,-number_of_backers),y=number_of_backers))+
+      geom_bar(stat="identity")
+    ggplotly(Rest_plotdraft3)
+  })
+  
+  
+  ###almost made it project#########################################################
+  output$Rest_US_almost_made_it_ID<-DT::renderDataTable({
+    Rest_datatable_almost<-Rest_US_reactive()%>%mutate(prop=usd_pledged_real/usd_goal_real)%>%
+      filter(prop<input$Rest_prop_max_ID, prop>input$Rest_prop_min_ID)%>%
+      select(ID,name,category,state,goal,prop)
+    
+    DT::datatable(Rest_datatable_almost)
+  })
+  ###extremley successful project#########################################################
+  output$Rest_US_successful_ID<-DT::renderDataTable({
+    Rest_datatable_successful<-Rest_US_reactive()%>%mutate(prop=usd_pledged_real/usd_goal_real)%>%
+      filter(prop>input$Rest_prop_success_max_ID)%>%
+      select(ID,name,category,state,goal,prop)
+    
+    DT::datatable(Rest_datatable_successful)
+  })
+  
+  #############word cloud################################################################
+  
+  output$Rest_word_cloud_plot_ID <- renderPlot({
+    #showing a message
+    isolate({
+      withProgress({
+        setProgress(message = "Processing corpus...")
+      })})
+    
+    Rest_category_filter<-Rest_US_reactive()%>%filter(main_category==input$wordcloud_category_ID)
+    Rest_testcloud<-paste(category_filter$name[0:400000], collapse='')
+    
+    Rest_docs <- Corpus(VectorSource(testcloud))
+    
+    # Convert the text to lower case
+    Rest_docs <- tm_map(Rest_docs, content_transformer(tolower))
+    # Remove numbers
+    Rest_docs <- tm_map(Rest_docs, removeNumbers)
+    # Remove english common stopwords
+    Rest_docs <- tm_map(Rest_docs, removeWords, stopwords("english"))
+    # Remove your own stop word
+    # specify your stopwords as a character vector
+    Rest_docs <- tm_map(Rest_docs, removeWords, c("blabla1", "blabla2")) 
+    # Remove punctuations
+    Rest_docs <- tm_map(Rest_docs, removePunctuation)
+    # Eliminate extra white spaces
+    Rest_docs <- tm_map(Rest_docs, stripWhitespace)
+    # Text stemming
+    # docs <- tm_map(docs, stemDocument)
+    
+    ###############
+    Rest_dtm <- TermDocumentMatrix(Rest_docs)
+    Rest_m <- as.matrix(Rest_dtm)
+    Rest_v <- sort(rowSums(Rest_m),decreasing=TRUE)
+    Rest_d <- data.frame(word = names(v),freq=v)
+    
+    wordcloud(words = Rest_d$word, freq = Rest_d$freq, min.freq = input$Rest_freq_ID,
+              max.words=input$Rest_max_ID, random.order=FALSE, rot.per=0.35, 
+              colors=brewer.pal(8, "Dark2"))
+  })
+  
+  
+  
+  
+  
+  
+  ####################################################################
   output$summary <- renderPrint({
     summary(cars)
   })
   
   ####full dataset table###############################################################
   output$tableID <- DT::renderDataTable({
-    DT::datatable(ks18)
-  })
+    DT::datatable(ks18)})
 }
