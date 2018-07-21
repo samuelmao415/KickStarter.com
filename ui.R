@@ -105,7 +105,26 @@ navbarPage("KickStarter",
                      )
                    )
                    
-          )),
+          ),
+          tabPanel("Word Cloud",
+                   sidebarLayout(
+                     # Sidebar with a slider and selection inputs
+                     sidebarPanel(
+                       selectInput("wordcloud_category_ID", "Choose a category:",
+                                   choices = unique(ks18$main_category)),
+                       sliderInput("freq_ID",
+                                   "Minimum Frequency:",
+                                   min = 1,  max = 100, value = 20),
+                       sliderInput("max_ID",
+                                   "Maximum Number of Words:",
+                                   min = 1,  max = 300,  value = 100)
+                     ),
+                     
+                     # Show Word Cloud
+                     mainPanel(
+                       plotOutput("word_cloud_plot_ID")
+                     )
+                   ))),
           
            tabPanel("Rest of the world",
                     sidebarLayout(

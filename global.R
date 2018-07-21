@@ -7,6 +7,10 @@ library(plotly)
 library(markdown)
 library(leaflet)
 library(shinydashboard)
+library(tm)
+library(SnowballC)
+library(wordcloud)
+library(RColorBrewer)
 
 #setwd("C:/Users/samuelmao/Desktop/DataScience/Project1/Project1")
 #read data into global.R
