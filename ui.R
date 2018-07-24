@@ -1,10 +1,10 @@
 
         #name of the project
-navbarPage("KickStarter",
+fluidPage(navbarPage("KickStarter",
             #####name of the tab
            tabPanel("World Map", 
                     fluidPage(
-                      leafletOutput("worldmap_plotID")
+                 leafletOutput("worldmap_plotID")
                     )
            ),
            ####Create a main tab of United Staes 
@@ -13,17 +13,17 @@ navbarPage("KickStarter",
               tabPanel("Fund Amount",
                     sidebarLayout(
                       sidebarPanel(
-                        radioButtons(inputId="state_ID", label="State of the project",
-                                    choices= c("All"="All","failed"="failed", "success"="successful",
-                                       "cancelled"="canceled","live"="live",
-                                       "undefined"="undefined","suspened"="suspended"
+                        radioButtons(inputId="state_ID", label="Outcome of the listed project",
+                                    choices= c("All"="All","Failed"="failed", "Successful"="successful",
+                                       "Canceled"="canceled","Live"="live",
+                                       "Undefined"="undefined","Suspended"="suspended"
                                        ), selected = "successful"
                         ),
                         sliderInput(inputId = "goal_range_ID",
-                                       label = "Choose a goal range",
+                                       label = "Range for desired amount of funding",
                                        min=0,max=300000,value=10000),
                         sliderInput(inputId = "binwidth_ID",
-                                    label = "Choose a binwidth",
+                                    label = "Binwidth for better visualization",
                                     min=0,max=10000,value=500),
                         verbatimTextOutput("summary_ID")
                         ),
@@ -31,47 +31,24 @@ navbarPage("KickStarter",
                         plotlyOutput("US_goal_ID"),
                         fluidPage(
                         DT::dataTableOutput("US_tableID"))
-                      )
-                    )
-           ),
-           ###main cateogry distribution tab that returns bar plot
-           tabPanel("Category Distribution",
-                    sidebarLayout(
-                      sidebarPanel(
-                        radioButtons(inputId="main_category_state_ID", label="State of the project",
-                                     choices= c("All"="All","failed"="failed", "success"="successful",
-                                                "cancelled"="canceled","live"="live",
-                                                "undefined"="undefined","suspened"="suspended"
-                                     ), selected = "successful"
-                        ),
-                        sliderInput(inputId = "main_category_observation_ID",
-                                    label = "Choose a category number threshold",
-                                    min=0,max=50000,value=10000)
-                        
-                      ),
-                      mainPanel(
-                        plotlyOutput("main_US_category_ID")
-                        #DT::dataTableOutput("US_category_tableID")
-                      )),
-                    DT::dataTableOutput("main_US_category_tableID")
-           ),
+                      )))
+                    
+           ,
+  
           ###category(include subcategory) distribution tab that returns a bar plot
-              tabPanel("Category and Subcategory Distribution (slow reaction!)",
+              tabPanel("Category and Subcategory Distribution",
                     sidebarLayout(
                       sidebarPanel(
-                        radioButtons(inputId="category_state_ID", label="State of the project",
-                                     choices= c("All"="All","failed"="failed", "success"="successful",
-                                                "cancelled"="canceled","live"="live",
-                                                "undefined"="undefined","suspened"="suspended"
+                        radioButtons(inputId="category_state_ID", label="Outcome of the listed project",
+                                     choices= c("All"="All","Failed"="failed", "Success"="successful",
+                                                "Cancelled"="canceled","Live"="live",
+                                                "Undefined"="undefined","Suspended"="suspended"
                                      ), selected = "successful"
-                        ),
-                        sliderInput(inputId = "category_observation_ID",
-                                    label = "Choose a category number threshold",
-                                    min=0,max=50000,value=10000)
+                        ),width=2
                         
                       ),
                       mainPanel(
-                        plotlyOutput("US_category_ID")
+                        plotlyOutput("US_category_ID"),width= 10
                         #DT::dataTableOutput("US_category_tableID")
                         )),
                     DT::dataTableOutput("US_category_tableID")
@@ -143,7 +120,7 @@ navbarPage("KickStarter",
                      
                      # Show Word Cloud
                      mainPanel(
-                       plotOutput("word_cloud_plot_ID")
+                       imageOutput("word_cloud_plot_ID", width = "100%", height = "500px")
                      )
                    ))),
           
@@ -191,7 +168,11 @@ navbarPage("KickStarter",
                                   ),
                                   sliderInput(inputId = "Rest_main_category_observation_ID",
                                               label = "Choose a category number threshold",
-                                              min=0,max=2000,value=1000)
+                                              min=0,max=2000,value=1000),
+                                  selectInput(inputId="Rest_main_category_region_ID", 
+                                              label=h3("Select country"), 
+                                              choices = c("All"="All",unique((ks18)%>%filter(region!="United States")%>%select(region))), 
+                                              selected ="All")
                                   
                                 ),
                                 mainPanel(
@@ -212,7 +193,11 @@ navbarPage("KickStarter",
                                   ),
                                   sliderInput(inputId = "Rest_category_observation_ID",
                                               label = "Choose a category number threshold",
-                                              min=0,max=50000,value=10000)
+                                              min=0,max=50000,value=10000),
+                                  selectInput(inputId="Rest_category_region_ID", 
+                                              label=h3("Select country"), 
+                                              choices = c("All"="All",unique((ks18)%>%filter(region!="United States")%>%select(region))), 
+                                              selected ="All")
                                   
                                 ),
                                 mainPanel(
@@ -278,12 +263,16 @@ navbarPage("KickStarter",
                                 sidebarPanel(
                                   selectInput("Rest_wordcloud_category_ID", "Choose a category:",
                                               choices = unique(ks18%>%filter(region!="United States")%>%select(main_category))),
+                                  selectInput("Rest_word_cloud_region_ID", "Choose a country:",
+                                              choices = c("All"="All",unique((ks18)%>%filter(region!="United States")%>%select(region))), 
+                                              selected ="All"),
                                   sliderInput("Rest_freq_ID",
                                               "Minimum Frequency:",
                                               min = 1,  max = 50, value = 10),
                                   sliderInput("Rest_max_ID",
                                               "Maximum Number of Words:",
                                               min = 1,  max = 200,  value = 100)
+                                  
                                 ),
                                 
                                 # Show Word Cloud
@@ -304,7 +293,7 @@ navbarPage("KickStarter",
                       tabPanel("About",
                                fluidRow(
                                  column(6,
-                                        includeMarkdown("about.md")
+                                        includeMarkdown("test.Rmd")
                                  ),
                                  column(3,
                                         img(class="img-polaroid",
@@ -321,5 +310,5 @@ navbarPage("KickStarter",
                                  )
                                )
                       )
-           ))
+           )))
           

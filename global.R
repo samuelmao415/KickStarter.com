@@ -11,7 +11,8 @@ library(tm)
 library(SnowballC)
 library(wordcloud)
 library(RColorBrewer)
-
+library(wesanderson)
+library(ggthemes)
 #setwd("C:/Users/samuelmao/Desktop/DataScience/Project1/Project1")
 #read data into global.R
 ks18<-fread(file = "./ks18.csv",sep = ',',fill=TRUE)

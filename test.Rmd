@@ -1,0 +1,626 @@
+---
+title: "The Best State For Tech Employment"
+author: "Samuel Mao"
+date: "July 26, 2017"
+output: md_document
+code_folding: hide
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, options(scipen = 999))
+```
+#{.tabset .tabset-fade .tabset-pills}
+
+## Introduction
+###Project Objective
+
+This project aims to locate the ideal state for MSBA students whose aim is to work for a tech company in roles such as Computer Programmer, Software Developer, and Computer System Analyst. The ideal state shall have at least one of the following:
+
+* a growing tech community (job growth)
+* afforable housing expenses(rent)
+* decent salary (competitive compensation)
+* ease of transporation (size of the airport)
+
+The result from this project will help me to choose which geographical location to start off my career.
+
+![](https://upload.wikimedia.org/wikipedia/en/3/33/Silicon_valley_title.png?style=centerme)
+
+### Data Preparation
+
+Data to support this project are from 1) [Occupational Employment Statisitcs](https://www.bls.gov/oes/) provided by the Bureau of Labor Statistic, where I can calculate and find the growth of tech jobs and avaerage salaries 2)  [ApartmentList](https://www.apartmentlist.com/rentonomics/rental-data) allows me to obtain average rent for cities in the United States (I will have to replicate the data since it is not downloadable) 3)[FAA](https://www.faa.gov/airports/planning_capacity/passenger_allcargo_stats/passenger) provides the frequency of enplanement of all the commerical airports in the US, which indicates the size of the airport.
+
+The data I've found to support this project fulfill the criteria below:
+
+- multilple data set
+- non-normalized characteristics
+- two or more datasets that need to be merged 
+- variables that need to be created
+
+### Methodology
+The state for tech employment is derived from four metrics illustrated above. 
+
+_Descriptive_: Job growth is the difference between last year's employment in roles such as Computer Sytem Analyst of a state (e.g. CA). Housing expense is the average rent of the state (e.g. CA). How affordable the housing expense is is derived from the difference between compensastion and the average rent. The compensation is the average made by a particular profession (e.g. Computer System Analyst) complied by the BLS. Frequency of commercial planes taking off is obtained from FAA, which allows me to explore the frequency of taking off of the corresponding state. Column graphs will help depicting the difference of the employment growth and the salary difference among states.
+
+_Predictive_: forecasting the growth rate of tech industry of different cities using 4-yr moving average for the year of 2017 (since the statistics has not been released yet)
+
+###Why Should You Care?
+**Being in a state with growing tech community and wages is very beneficial to one's career.**
+
+##Packages Required
+
+###Packages Used
+
+- library(tidyverse) #data cleaning
+- library(readxl) #read excel file
+- library(stringr) #character manipulation
+- library(forcats) #merge data
+- library(vcd) #visualize categorical data
+- library(maps) #mapping with ggplot2
+- library(mapproj) #mapping with ggplot2
+- library(DT) #output table for data
+- library(rmarkdown) #To not show scientific notation
+
+
+
+
+
+##Data Preparation
+
+Preparation
+
+```{r , message=FALSE}
+library(tidyverse)
+library(readxl)
+library(stringr)
+library(forcats) 
+library(vcd)
+library(maps) 
+library(mapproj)
+library(DT)
+library(rmarkdown)
+
+
+setwd("C:/Users/samuelmao/Desktop")
+statedata16<-read_excel('R_Final_dataset/state16.xlsx')
+```
+
+
+The original 2016 employment dataset from U.S. Bureau of Labor Statistics
+```{r ,message=FALSE, warning=FALSE}
+
+
+
+#show original data
+datatable(statedata16)
+
+
+```
+
+Filtering all the related job titles that contain 'Computer' and 'Software'
+```{r}
+#Choosing occupations that have 'computers'  
+statedata16%>%
+  filter(str_detect(OCC_TITLE,'Computer*'))%>%
+  count(OCC_TITLE) 
+#We get 18 different titles, and those related to entry-level analytics postions are: 'Computer and Information Research Scientists', 'Computer and Mathematical Occupations', 'Computer Programmers', 'Computer Systems Analysts', 'Network and Computer Systems Administrators'
+
+#Choosing occupations that have 'Software'  
+statedata16%>%
+  filter(str_detect(OCC_TITLE,'Software*'))%>%
+  count(OCC_TITLE) 
+#We get 2 different titles and they are all related: 'Software Developers, Applications','Software Developers, Systems Software '
+
+
+#Rename all the related occupation into "Analytics"
+  as.data.frame(sapply(statedata16,sub,pattern='\\*',replacement=NA))%>%
+    select(ST,OCC_TITLE,A_MEAN,TOT_EMP)%>%
+  filter(OCC_TITLE %in% c('Computer and Information Research Scientists', 
+                          'Computer and Mathematical Occupations', 
+                          'Computer Programmers',
+                          'Computer Systems Analysts', 
+                          'Network and Computer Systems Administrators',
+                          'Software Developers, Applications',
+                          'Software Developers, Systems Software'))%>%
+    mutate(OCC_TITLE = fct_collapse(
+      OCC_TITLE,
+      Analytics='Computer and Information Research Scientists', 
+      Analytics='Computer and Mathematical Occupations', 
+      Analytics='Computer Programmers',
+      Analytics='Computer Systems Analysts', 
+      Analytics='Network and Computer Systems Administrators',
+      Analytics='Software Developers, Applications',
+      Analytics='Software Developers, Systems Software')) %>%
+      na.omit(A_MEAN) -> mean_salary16
+  mean_salary16$A_MEAN <- as.numeric(as.character(mean_salary16$A_MEAN))
+  datatable(mean_salary16 , caption = "First Cleaned Dataset")
+
+```
+  
+* Import data from other years of employment in each state using the same method
+  
+```{r}
+#read data from year 15,14,13,and 12
+setwd("C:/Users/samuelmao/Desktop")
+      statedata15<-read_excel('R_Final_dataset/state15.xlsx')
+      statedata14<-read_excel('R_Final_dataset/state14.xlsx')
+      statedata13<-read_xls('R_Final_dataset/state13.xls')
+      statedata12<-read_xls('R_Final_dataset/state12.xls')
+```
+
+*Importing rent data of 2016 and clean the data
+```{r}
+#import the rent data
+setwd("C:/Users/samuelmao/Desktop")
+rentdata<-read_excel('R_Final_dataset/rent.xlsx')
+
+#clean rent data and change monthly into annual rent 
+
+complete_rent_data<-rentdata%>%
+  rename('month_rate'='1BR')%>%
+  transmute(ST, Yearly_rent = month_rate * 12)%>%
+  mutate(ST = fct_collapse(
+  ST,
+  AL='Alabama', 
+  AK='Alaska', 
+  AZ='Arizona',
+  AR='Arkansas', 
+  CA='California',
+  CO='Colorado',
+  CT='Connecticut',
+  DE='Delaware',
+  DC='District of Columbia', 
+  FL='Florida', 
+  GA='Georgia',
+  HI='Hawaii', 
+  ID='Idaho',
+  IL='Illinois',
+  IN='Indiana',
+  IA='Iowa',
+  KS='Kansas', 
+  KY='Kentucky',
+  LA='Louisiana', 
+  ME='Maine',
+  MD='Maryland',
+  MA='Massachusetts',
+  MI='Michigan',
+  MN='Minnesota', 
+  MS='Mississippi', 
+  MO='Missouri',
+  MT='Montana', 
+  NE='Nebraska',
+  NV='Nevada',
+  NH='New Hampshire',
+  NJ='New Jersey',
+  NM='New Mexico', 
+  NY='New York',
+  NC='North Carolina',
+  ND='North Dakota',
+  OH='Ohio',
+  OK='Oklahoma', 
+  OR='Oregon', 
+  PA='Pennsylvania',
+  RI='Rhode Island', 
+  SC='South Carolina',
+  SD='South Dakota',
+  TN='Tennessee',
+  TX='Texas',
+  UT='Utah', 
+  VT='Vermont', 
+  VA='Virginia',
+  WA='Washington', 
+  WV='West Virginia',
+  WI='Wisconsin',
+  WY='Wyoming'))
+
+datatable(complete_rent_data , caption = "First Cleaned Rent Dataset")
+
+  
+```
+
+##Data Exploration
+
+###2016 Tech Salary: California is the leader in salary and Washington not far off
+```{r, fig.width=14, fig.align="center"}
+ #plotting the graph to see the distribution of salaries across states
+      finalplot<-mean_salary16%>%
+        group_by(ST)%>%
+        summarise(mean_by_state=mean(A_MEAN))%>%
+        ggplot(aes(reorder(ST,-mean_by_state), mean_by_state, options(scipen = 999)), options(scipen = 5))+geom_col(aes(fill=mean_by_state))+labs(x='State',y='Average Salary')+coord_cartesian(ylim = c(47000, 113000))+guides(fill=guide_legend(title=NULL))
+      finalplot+ theme(legend.position="none")+ggtitle("Average Salary in Tech Across the Country")
+```
+
+###Average Employment Growth Across the Country from 2012 to 2016: Virgin Island leads (WOW!) and Washington State is growing fast 
+
+```{r, fig.width=14, fig.align="center"}
+#(2016)Find the average employment number in tech across states in 2016
+as.data.frame(sapply(statedata16,sub,pattern='\\*',replacement=NA))%>%
+        select(ST,OCC_TITLE,A_MEAN, TOT_EMP)%>%
+        filter(OCC_TITLE %in% c('Computer and Information Research Scientists', 
+                                'Computer and Mathematical Occupations', 
+                                'Computer Programmers',
+                                'Computer Systems Analysts', 
+                                'Network and Computer Systems Administrators',
+                                'Software Developers, Applications',
+                                'Software Developers, Systems Software'))%>%
+        mutate(OCC_TITLE = fct_collapse(
+          OCC_TITLE,
+          Analytics='Computer and Information Research Scientists', 
+          Analytics='Computer and Mathematical Occupations', 
+          Analytics='Computer Programmers',
+          Analytics='Computer Systems Analysts', 
+          Analytics='Network and Computer Systems Administrators',
+          Analytics='Software Developers, Applications',
+          Analytics='Software Developers, Systems Software')) %>%
+        na.omit(TOT_EMP) -> mean_occupation16
+      as.numeric(as.character(mean_occupation16$TOT_EMP))->mean_occupation16$TOT_EMP
+      mean_occupation16%>%
+        group_by(ST)%>%
+        summarise(EMP16=mean(TOT_EMP))->employment_tibble16
+
+      
+
+
+#(2015)Find the average employment number in tech across states in 2015
+      as.data.frame(sapply(statedata15,sub,pattern='\\*',replacement=NA))%>%
+        select(ST,OCC_TITLE,A_MEAN, TOT_EMP)%>%
+        filter(OCC_TITLE %in% c('Computer and Information Research Scientists', 
+                                'Computer and Mathematical Occupations', 
+                                'Computer Programmers',
+                                'Computer Systems Analysts', 
+                                'Network and Computer Systems Administrators',
+                                'Software Developers, Applications',
+                                'Software Developers, Systems Software'))%>%
+        mutate(OCC_TITLE = fct_collapse(
+          OCC_TITLE,
+          Analytics='Computer and Information Research Scientists', 
+          Analytics='Computer and Mathematical Occupations', 
+          Analytics='Computer Programmers',
+          Analytics='Computer Systems Analysts', 
+          Analytics='Network and Computer Systems Administrators',
+          Analytics='Software Developers, Applications',
+          Analytics='Software Developers, Systems Software')) %>%
+        na.omit(TOT_EMP) -> mean_occupation15
+      as.numeric(as.character(mean_occupation15$TOT_EMP))->mean_occupation15$TOT_EMP
+      mean_occupation15%>%
+        group_by(ST)%>%
+        summarise(EMP15=mean(TOT_EMP))->employment_tibble15
+      
+#(2014)Find the average employment number in tech across states in 2014
+      as.data.frame(sapply(statedata14,sub,pattern='\\*',replacement=NA))%>%
+        select(ST,OCC_TITLE,A_MEAN, TOT_EMP)%>%
+        filter(OCC_TITLE %in% c('Computer and Information Research Scientists', 
+                                'Computer and Mathematical Occupations', 
+                                'Computer Programmers',
+                                'Computer Systems Analysts', 
+                                'Network and Computer Systems Administrators',
+                                'Software Developers, Applications',
+                                'Software Developers, Systems Software'))%>%
+        mutate(OCC_TITLE = fct_collapse(
+          OCC_TITLE,
+          Analytics='Computer and Information Research Scientists', 
+          Analytics='Computer and Mathematical Occupations', 
+          Analytics='Computer Programmers',
+          Analytics='Computer Systems Analysts', 
+          Analytics='Network and Computer Systems Administrators',
+          Analytics='Software Developers, Applications',
+          Analytics='Software Developers, Systems Software')) %>%
+        na.omit(TOT_EMP) -> mean_occupation14
+      as.numeric(as.character(mean_occupation14$TOT_EMP))->mean_occupation14$TOT_EMP
+      mean_occupation14%>%
+        group_by(ST)%>%
+        summarise(EMP14=mean(TOT_EMP))->employment_tibble14
+      
+#(2013)Find the average employment number in tech across states in 2013
+      as.data.frame(sapply(statedata13,sub,pattern='\\*',replacement=NA))%>%
+        select(ST,OCC_TITLE,A_MEAN, TOT_EMP)%>%
+        filter(OCC_TITLE %in% c('Computer and Information Research Scientists', 
+                                'Computer and Mathematical Occupations', 
+                                'Computer Programmers',
+                                'Computer Systems Analysts', 
+                                'Network and Computer Systems Administrators',
+                                'Software Developers, Applications',
+                                'Software Developers, Systems Software'))%>%
+        mutate(OCC_TITLE = fct_collapse(
+          OCC_TITLE,
+          Analytics='Computer and Information Research Scientists', 
+          Analytics='Computer and Mathematical Occupations', 
+          Analytics='Computer Programmers',
+          Analytics='Computer Systems Analysts', 
+          Analytics='Network and Computer Systems Administrators',
+          Analytics='Software Developers, Applications',
+          Analytics='Software Developers, Systems Software')) %>%
+        na.omit(TOT_EMP) -> mean_occupation13
+      as.numeric(as.character(mean_occupation13$TOT_EMP))->mean_occupation13$TOT_EMP
+      mean_occupation13%>%
+        group_by(ST)%>%
+        summarise(EMP13=mean(TOT_EMP))->employment_tibble13
+      
+#(2012)Find the average employment number in tech across states in 2012
+      as.data.frame(sapply(statedata12,sub,pattern='\\*',replacement=NA))%>%
+        select(ST,OCC_TITLE,A_MEAN, TOT_EMP)%>%
+        filter(OCC_TITLE %in% c('Computer and Information Research Scientists', 
+                                'Computer and Mathematical Occupations', 
+                                'Computer Programmers',
+                                'Computer Systems Analysts', 
+                                'Network and Computer Systems Administrators',
+                                'Software Developers, Applications',
+                                'Software Developers, Systems Software'))%>%
+        mutate(OCC_TITLE = fct_collapse(
+          OCC_TITLE,
+          Analytics='Computer and Information Research Scientists', 
+          Analytics='Computer and Mathematical Occupations', 
+          Analytics='Computer Programmers',
+          Analytics='Computer Systems Analysts', 
+          Analytics='Network and Computer Systems Administrators',
+          Analytics='Software Developers, Applications',
+          Analytics='Software Developers, Systems Software')) %>%
+        na.omit(TOT_EMP) -> mean_occupation12
+      as.numeric(as.character(mean_occupation12$TOT_EMP))->mean_occupation12$TOT_EMP
+      mean_occupation12%>%
+        group_by(ST)%>%
+        summarise(EMP12=mean(TOT_EMP))->employment_tibble12
+      
+
+#compare the employment numbers across years by state
+yr12and13<-inner_join(employment_tibble12,employment_tibble13,'ST')
+yr1213and14<-inner_join(yr12and13,employment_tibble14,'ST')
+yr121314and15<-inner_join(yr1213and14,employment_tibble15,'ST')
+employment_number_across1213141516<-inner_join(yr121314and15,employment_tibble16,'ST')
+
+#plotting the graph for 4-year average tech job growth rate across the country
+jobgrowth<-employment_number_across1213141516%>%
+  transmute(ST,gain_in_emp=((((EMP13-EMP12)/(EMP12))+((EMP14-EMP13)/(EMP13))+((EMP15-EMP14)/(EMP14))+((EMP16-EMP15)/(EMP15)))/4))
+  
+plot<-ggplot(jobgrowth, aes(reorder(ST,-gain_in_emp), gain_in_emp))+geom_col(aes(fill=gain_in_emp))+labs(x='State',y='4-Year Average Tech Job Growth Rate')+guides(fill=guide_legend(title=NULL))
+
+plot+ theme(legend.position="none")+ggtitle("4-Year Average Tech Job Growth Rate Across State")
+
+
+```
+
+###Employment of 2016: California leads and Texas follows
+
+```{r,fig.width=14,fig.align="center"}
+
+#plot the employment 16
+emp_in_16 <- employment_tibble16%>%
+  group_by(ST)%>%
+  ggplot(aes(reorder(ST,-EMP16),EMP16))+geom_col(aes(fill=EMP16))+labs(x='State',y='Number of Employees')+guides(fill=guide_legend(title=NULL))
+
+emp_in_16+theme(legend.position="none")+ggtitle("Total Employment in Tech in 2016")
+```
+
+###Predicted Employment of 2017 using 4-yr Moving Average: GA will overtake OH
+```{r,fig.width=14, fig.align="center"}
+#plot the predicted 2017 employment using 4-yr MA      
+
+jobandgrowth16<-inner_join(jobgrowth,employment_tibble16,'ST')
+
+
+
+
+predicted_job_17<-transmute(jobandgrowth16,ST, predicted_job=EMP16+(EMP16*gain_in_emp))
+
+predicted_plot<-predicted_job_17%>%
+  ggplot(aes(reorder(ST,-predicted_job),predicted_job), options(scipen = 999))+geom_col(aes(fill=predicted_job))+labs(x='State',y='Predicted Number of Employees')+guides(fill=guide_legend(title=NULL))
+
+predicted_plot+theme(legend.position="none")+ggtitle("Predicted Total Employment in Tech in 2017")
+
+```
+
+###Rent in 2016: Hawaii actually came on top
+```{r, fig.width=14, fig.align="center"}
+complete_rent_data%>%
+  ggplot(aes(reorder(ST,-Yearly_rent), Yearly_rent))+geom_col(aes(fill=Yearly_rent))+labs(x='State',y='Yearly Rent ($)')+guides(fill=guide_legend(title=NULL))+theme(legend.position="none")+ggtitle("1-BR Yearly Rent Across State")
+
+```
+
+###DIfference Between Salary and Rent in 2016: Washington is no.1!
+```{r,fig.width=14, fig.align="center"}
+#merge rent and salary, and plot the graph
+compensation_data<-mean_salary16%>%
+  group_by(ST)%>%
+  summarise(Compensation=round(mean(A_MEAN)))
+
+
+rent_salary<-suppressWarnings(inner_join(compensation_data,complete_rent_data,'ST'))
+rent_salary_comparison<-rent_salary%>%
+  mutate(Difference=Compensation-Yearly_rent)
+
+rent_salary_comparison%>%
+  ggplot(aes(reorder(ST,-Difference),Difference))+geom_col(aes(fill=Difference))+labs(x='State',y='Salary and Rent Difference ($)')+guides(fill=guide_legend(title = NULL))+theme(legend.position = 'none')+ggtitle('2016 Living Standard Comparison')
+
+```
+
+###Table of the Difference: Complete breakdown by each state
+```{r}
+#output the table for the merged rent and salary
+datatable(rent_salary_comparison, caption = "Rent and Salary")
+```
+
+###Rent Across the Country in a Map: the lighter the color, the higher the rent!
+```{r, fig.width=12, fig.align="center", message=FALSE}
+#map the rent across country
+rentdataformapping<-rentdata%>%
+  rename('month_rate'='1BR', 'state'='ST')%>%
+  transmute(state, Yearly_rent = month_rate * 12)
+
+rentdataformapping %>%
+  mutate(region = tolower(state),
+         Yearly_rent) %>%
+  right_join(map_data("state")) %>% 
+  ggplot(aes(x = long, y = lat, group = group)) +
+  geom_polygon(aes(fill = Yearly_rent))+ 
+  ggtitle("2016 Annual Rent Across Country")+
+  expand_limits() +
+  theme_void()
+
+```
+
+###Salary - Rent Across the Country in 2016 in a Map: the lighter color means more money at disposal
+```{r, fig.width=12, fig.align="center", message=FALSE}
+#map the most livable states (need to translate ST abb. to full name)
+rent_salary_formapping<-rent_salary_comparison%>%
+  mutate(ST = fct_collapse(
+    ST,
+    Alabama='AL', 
+    Alaska='AK', 
+    Arizona='AZ',
+    Arkansas='AR', 
+    California='CA',
+    Colorado='CO',
+    Connecticut='CT',
+    Delaware='DE',
+    'District of Columbia'='DC', 
+    Florida='FL', 
+    Georgia='GA',
+    Hawaii='HI', 
+    Idaho='ID',
+    Illinois='IL',
+    Indiana='IN',
+    Iowa='IA',
+    Kansas='KS', 
+    Kentucky='KY',
+    Louisiana='LA', 
+    Maine='ME',
+    Maryland='MD',
+    Massachusetts='MA',
+    Michigan='MI',
+    Minnesota='MN', 
+    Mississippi='MS', 
+    Missouri='MO',
+    Montana='MT', 
+    Nebraska='NE',
+    Nevada='NV',
+    'New Hampshire'='NH',
+    'New Jersey'='NJ',
+    'New Mexico'='NM', 
+    'New York'='NY',
+    'North Carolina'='NC',
+    'North Dakota'='ND',
+    Ohio='OH',
+    Oklahoma='OK', 
+    Oregon='OR', 
+    Pennsylvania='PA',
+    'Rhode Island'='RI', 
+    'South Carolina'='SC',
+    'South Dakota'='SD',
+    Tennessee='TN',
+    Texas='TX',
+    Utah='UT', 
+    Vermont='VT', 
+    Virginia='VA',
+    Washington='WA', 
+    'West Virginia'='WV',
+    Wisconsin='WI',
+    Wyoming='WY'))
+
+
+rent_salary_formapping %>%
+  transmute(region = tolower(ST),Difference) %>%
+  right_join(map_data("state")) %>% 
+  ggplot(aes(x = long, y = lat, group = group)) +
+  geom_polygon(aes(fill = (Difference)))+ 
+  guides(fill=guide_legend(title ='Difference ($) '))+
+  ggtitle("2016 Salary Minus Rent Comparison")+
+  expand_limits() +
+  theme_void()
+
+
+```
+
+###The Difference between Rent and Salary in Column: bottom column + top colum = salary
+
+```{r, fig.width=14, fig.align="center"}
+#make a graph that shows the difference between compensation and rent
+
+df1<-gather(rent_salary_comparison,metric,value,Difference:Yearly_rent)
+ggplot(df1,aes(reorder(ST, -value),value, fill=metric))+geom_col()+labs(x='State', y='Compensation and Rent ($)')+scale_fill_grey(name="Total Compensation",
+              breaks=c("Difference", "Yearly_rent"),
+              labels=c("Remaining Salary", "Rent"))+ggtitle('Compensation and Rent Comparison in 2016')
+
+
+```
+
+###State with salary and rent difference larger than $85000: CA CO DC MA MD MN NC NJ OR VA WA
+```{r}
+#difference >85000 and do more calculation
+top_state<-rent_salary_comparison%>%
+  filter(Difference>85000)
+top_state
+```
+
+###The Ideal State After Taking Into Account of Airport: California leads with two large airports
+```{r}
+
+#CA CO DC MA MD MN NC NJ NY OR VA WA
+#read data from the airport data
+setwd("C:/Users/samuelmao/Desktop")
+airport<-read_excel('R_Final_dataset/airport.xlsx')
+
+airport_filtered<-airport%>%
+  filter(ST%in% c('CA','CO','DC','MA','MD','MN','NC','NJ','NY','OR','VA','WA'))%>%
+  rename(enplanements='CY 16 Enplanements')%>%
+  arrange(desc(enplanements))%>%
+  filter(enplanements>9000000)
+ 
+#choose the state that has enplanements larger than 9000000 annually
+airport_filtered
+#we have these states left where we could obtain cheaper tickers (they all remained)
+#CA NY CO WA NC NJ MN MA MD VA OR
+
+
+
+
+```
+
+
+##Summary
+
+###Results:
+* All Top 5 In Order:
+1. Top 5 in average salary: CA WA NY DC VA
+2. Top 5 employment growth rate: VI DE AK WA GA
+3. Predicted 2017 employment number: CA TX NY VA WA
+4. Difference between rent and salary: WA VA CA NY MD
+5. Top 5 Airport: CA NY CO CA WA
+
+###Points
+The top ranked state will get 5 points, the following nth state will get (5 - n) point. If a state only has airport category ranked top 5, it will not get point.
+
+State         | Point(s)
+------------- | -------------
+CA            | 23
+WA            | 13 
+NY            | 12
+VA            | 7
+TX            | 4
+DC            | 2
+VI            | 1
+DE            | 1
+AK            | 1
+GA            | 1
+MD            | 1
+
+
+###Conclusion:
+
+* California is strong in two categories: salary and employment. It is the number one choice for people who want a good career in tech. Its employment number is almost double of the second higest tech employment state, Texas. The opportunite in California is plenty.
+
+* Washington state is strong in salary, and it is growing fast. Although it does not have as many tech jobs as California, I believe it will be a strong contender in the next few years if the salary remains high and the difference between salary and rent remains high as well. 
+
+* New York not surprisingly always a strong contender in every category. It is not different from Washington state in tech employment, salary, and the difference between rent and salary.
+
+* Virginia and D.C.: Virgina is top 5 in tech employment and it pays pretty well. For people who are interested in working in tech for the government, the state is very attractive. D.C. does not have that many people employed in tech, probably because people who work in D.C. live in Virgina state.
+
+* Texas: Altought Texas would not pay well in salary, and the difference between salary and rent is not as significant as many other states, Texas has the second-highest tech employment in the country. It can be a back-up state for tech since one could still be surrounded with a large tech community and benefit from it.
+
+* Virgin Island: Due to its small amount of tech-employment, Virgin Island has the highest job growth rate from the past 4 years. Even it has only hundreds of tech employees, it is good to know that it is hiring, and the salary is the same as North and South Dakota.
+
+>The Bottom Line:
+Silicon Valley is still the tech capital, but Washington state is a good alternative. People who love New York can also find good tech employment in New York.
+
+
+`
+
