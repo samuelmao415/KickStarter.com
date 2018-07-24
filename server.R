@@ -42,18 +42,47 @@ function(input, output, session) {
       select(ID,name,category,state,goal)
     DT::datatable(datatable_goal)
   })
-#####################################################
 
-  ####category observations######################################################
+  
+  ##########main category observation#############################
+  
   #plot histogram for each category given the state of the project and selected observation
-  output$US_category_ID<- renderPlotly({
+  output$main_US_category_ID<- renderPlotly({
     withProgress({
       setProgress(message = "Processing plots...")
+      
+      main_plotdraft2<-US_reactive()%>%group_by(main_category)%>%{if(input$main_category_state_ID=="All") . else filter(.,state==input$main_category_state_ID)}%>%
+        summarize(num=n())%>%filter(num>input$main_category_observation_ID)%>%
+        ggplot(aes(x=main_category,y=num))+geom_bar(stat="identity")
+      
+      ggplotly(main_plotdraft2)})
     
-  plotdraft2<-US_reactive()%>%{if(input$category_state_ID=="All") . else filter(.,state==input$category_state_ID)}%>%
-    group_by(main_category,category)%>%summarize(num=n())%>%
+  })
+  #selected data table given state of the project and the category
+  output$main_US_category_tableID <-DT::renderDataTable({
+    main_datatable_category<-US_reactive()%>%group_by(main_category)%>%mutate(num=n())%>%
+    {if(input$main_category_state_ID!="All") filter(.,state==input$main_category_state_ID,
+                                               num>input$category_observation_ID) else  .}%>%
+      select(ID,name,main_category,category,state,goal)
+    
+    DT::datatable(main_datatable_category)
+    
+   
+  })
+  
+
+  ####main category and subcategory observations######################################################
+  #plot histogram for each category given the state of the project and selected observation
+  
+  US_category_reactive<-reactive({US_reactive()%>%group_by(main_category)%>%mutate(num=n())})
+  
+  output$US_category_ID<- renderPlotly({
+    withProgress({
+      setProgress(message = "Large dataset. Please wait...")
+    
+  plotdraft2<-US_category_reactive()%>%{if(input$category_state_ID=="All") . else filter(.,state==input$category_state_ID)}%>%
     filter(num>input$category_observation_ID)%>%
-    ggplot(aes(x=reorder(main_category,-num),y=num, fill=category))+geom_bar(stat="identity")
+    ggplot(aes(x=main_category,y=num,fill=category))+geom_bar(stat="identity")
   
   ggplotly(plotdraft2)})
   
@@ -140,9 +169,9 @@ function(input, output, session) {
   })
   
   
-  #####################################################################
-  #################Rest of the world####################################
-  ####data for US tab with united stated selected#########################################
+  ###########################################################################################
+  #################Rest of the world##########################################################
+  ####data for rest of the world tab with ###############################################
   Rest_US_reactive <- reactive({
     ks18%>%filter(region != "United States")})
   
@@ -153,10 +182,13 @@ function(input, output, session) {
     withProgress({
       setProgress(message = "Processing plots...")
     Rest_plotdraft<-Rest_US_reactive()%>%
-      #add a "no-filter" option to the filter using ifelse statement
+      #add a "no-filter" option to the filter using ifelse statement for the state of the project
     {if(input$Rest_state_ID!="All") filter(.,state==input$Rest_state_ID,
                                       usd_goal_real<input$Rest_goal_range_ID) else 
                                         filter(.,usd_goal_real<input$Rest_goal_range_ID)}%>%
+      #add a filter option to let user select countries
+         {if(input$Rest_region_ID!="All") filter(.,region==input$Rest_region_ID)
+     else .}%>%
       ggplot(aes(x=usd_goal_real))+geom_histogram(binwidth = input$Rest_binwidth_ID)
     ggplotly(Rest_plotdraft)})})
   
@@ -175,32 +207,62 @@ function(input, output, session) {
       select(ID,name,category,state,usd_goal_real,region)
     DT::datatable(Rest_datatable_goal)
   })
-  #####################################################
+
   
-  ####category observations######################################################
+  ##########main category observation#############################
+  
   #plot histogram for each category given the state of the project and selected observation
-  output$Rest_US_category_ID<- renderPlotly({
+  output$Rest_main_US_category_ID<- renderPlotly({
     withProgress({
       setProgress(message = "Processing plots...")
+      
+      Rest_main_plotdraft2<-Rest_US_reactive()%>%group_by(main_category)%>%{if(input$Rest_main_category_state_ID=="All") . else filter(.,state==input$Rest_main_category_state_ID)}%>%
+        summarize(num=n())%>%filter(num>input$Rest_main_category_observation_ID)%>%
+        ggplot(aes(x=main_category,y=num))+geom_bar(stat="identity")
+      
+      ggplotly(Rest_main_plotdraft2)})
     
-    Rest_plotdraft2<-Rest_US_reactive()%>%{if(input$Rest_category_state_ID=="All") . else filter(.,state==input$Rest_category_state_ID)}%>%
-      group_by(main_category,category)%>%summarize(num=n())%>%
-      filter(num>input$Rest_category_observation_ID)%>%
-      ggplot(aes(x=reorder(main_category,-num),y=num, fill=category))+geom_bar(stat="identity")
+  })
+  #selected data table given state of the project and the category
+  output$Rest_main_US_category_tableID <-DT::renderDataTable({
+    Rest_main_datatable_category<-Rest_US_reactive()%>%group_by(main_category)%>%mutate(num=n())%>%
+    {if(input$Rest_main_category_state_ID!="All") filter(.,state==input$Rest_main_category_state_ID,
+                                                    num>input$Rest_category_observation_ID) else  .}%>%
+      select(ID,name,main_category,category,state,goal)
     
-    ggplotly(Rest_plotdraft2)})
+    DT::datatable(Rest_main_datatable_category)
+    
+    
+  })
+  
+  
+  ####main category and subcategory observations######################################################
+  #plot histogram for each category given the state of the project and selected observation
+  
+  Rest_US_category_reactive<-reactive({Rest_US_reactive()%>%group_by(main_category)%>%mutate(num=n())})
+  
+  output$Rest_US_category_ID<- renderPlotly({
+    withProgress({
+      setProgress(message = "Large dataset. Please wait...")
+      
+      Rest_plotdraft2<-Rest_US_category_reactive()%>%{if(input$Rest_category_state_ID=="All") . else filter(.,state==input$Rest_category_state_ID)}%>%
+        filter(num>input$Rest_category_observation_ID)%>%
+        ggplot(aes(x=main_category,y=num,fill=category))+geom_bar(stat="identity")
+      
+      ggplotly(Rest_plotdraft2)})
     
   })
   
   #selected data table given state of the project and the category
   output$Rest_US_category_tableID <-DT::renderDataTable({
-    Rest_datatable_category<-Rest_US_reactive()%>%group_by(main_category,category)%>%mutate(num=n())%>%
+    Rest_datatable_category<-US_reactive()%>%group_by(main_category,category)%>%mutate(num=n())%>%
     {if(input$Rest_category_state_ID!="All") filter(.,state==input$Rest_category_state_ID,
                                                num>input$Rest_category_observation_ID) else  .}%>%
       select(ID,name,main_category,category,state,goal)
     
     DT::datatable(Rest_datatable_category)
   })
+  
   
   #####Backers Analysis############################################################
   
@@ -274,16 +336,14 @@ function(input, output, session) {
   })
   
   
-  
-  
-  
-  
-  ####################################################################
-  output$summary <- renderPrint({
-    summary(cars)
-  })
-  
   ####full dataset table###############################################################
   output$tableID <- DT::renderDataTable({
     DT::datatable(ks18)})
-}
+
+
+####################################################################
+output$summary <- renderPrint({
+  summary(cars)
+})
+
+  }

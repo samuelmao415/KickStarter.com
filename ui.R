@@ -34,8 +34,29 @@ navbarPage("KickStarter",
                       )
                     )
            ),
-          ###category distribution tab that returns a bar plot
-              tabPanel("Category Distribution",
+           ###main cateogry distribution tab that returns bar plot
+           tabPanel("Category Distribution",
+                    sidebarLayout(
+                      sidebarPanel(
+                        radioButtons(inputId="main_category_state_ID", label="State of the project",
+                                     choices= c("All"="All","failed"="failed", "success"="successful",
+                                                "cancelled"="canceled","live"="live",
+                                                "undefined"="undefined","suspened"="suspended"
+                                     ), selected = "successful"
+                        ),
+                        sliderInput(inputId = "main_category_observation_ID",
+                                    label = "Choose a category number threshold",
+                                    min=0,max=50000,value=10000)
+                        
+                      ),
+                      mainPanel(
+                        plotlyOutput("main_US_category_ID")
+                        #DT::dataTableOutput("US_category_tableID")
+                      )),
+                    DT::dataTableOutput("main_US_category_tableID")
+           ),
+          ###category(include subcategory) distribution tab that returns a bar plot
+              tabPanel("Category and Subcategory Distribution (slow reaction!)",
                     sidebarLayout(
                       sidebarPanel(
                         radioButtons(inputId="category_state_ID", label="State of the project",
@@ -46,7 +67,7 @@ navbarPage("KickStarter",
                         ),
                         sliderInput(inputId = "category_observation_ID",
                                     label = "Choose a category number threshold",
-                                    min=0,max=15000,value=3000)
+                                    min=0,max=50000,value=10000)
                         
                       ),
                       mainPanel(
@@ -142,9 +163,13 @@ navbarPage("KickStarter",
                                   sliderInput(inputId = "Rest_goal_range_ID",
                                               label = "Choose a goal range",
                                               min=0,max=300000,value=10000),
-                                  sliderInput(inputId = "binwidth_ID",
+                                  sliderInput(inputId = "Rest_binwidth_ID",
                                               label = "Choose a binwidth",
                                               min=0,max=10000,value=500),
+                                  selectInput(inputId="Rest_region_ID", 
+                                              label=h3("Select country"), 
+                                              choices = c("All"="All",unique((ks18)%>%filter(region!="United States")%>%select(region))), 
+                                              selected ="All"),
                                   verbatimTextOutput("Rest_summary_ID")
                                 ),
                                 mainPanel(
@@ -154,8 +179,29 @@ navbarPage("KickStarter",
                                 )
                               )
                      ),
-                     ###category distribution tab that returns a bar plot
+                     ###main cateogry distribution tab that returns bar plot
                      tabPanel("Category Distribution",
+                              sidebarLayout(
+                                sidebarPanel(
+                                  radioButtons(inputId="Rest_main_category_state_ID", label="State of the project",
+                                               choices= c("All"="All","failed"="failed", "success"="successful",
+                                                          "cancelled"="canceled","live"="live",
+                                                          "undefined"="undefined","suspened"="suspended"
+                                               ), selected = "successful"
+                                  ),
+                                  sliderInput(inputId = "Rest_main_category_observation_ID",
+                                              label = "Choose a category number threshold",
+                                              min=0,max=2000,value=1000)
+                                  
+                                ),
+                                mainPanel(
+                                  plotlyOutput("Rest_main_US_category_ID")
+                                  #DT::dataTableOutput("US_category_tableID")
+                                )),
+                              DT::dataTableOutput("Rest_main_US_category_tableID")
+                     ),
+                     ###category(include subcategory) distribution tab that returns a bar plot
+                     tabPanel("Category and Subcategory Distribution (slow reaction!)",
                               sidebarLayout(
                                 sidebarPanel(
                                   radioButtons(inputId="Rest_category_state_ID", label="State of the project",
@@ -166,7 +212,7 @@ navbarPage("KickStarter",
                                   ),
                                   sliderInput(inputId = "Rest_category_observation_ID",
                                               label = "Choose a category number threshold",
-                                              min=0,max=2000,value=300)
+                                              min=0,max=50000,value=10000)
                                   
                                 ),
                                 mainPanel(
@@ -251,6 +297,9 @@ navbarPage("KickStarter",
            tabPanel("Data",
                     DT::dataTableOutput("tableID")
            ),
+          
+          ##############################################
+          
            navbarMenu("More",
                       tabPanel("About",
                                fluidRow(
