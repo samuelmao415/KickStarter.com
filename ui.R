@@ -126,17 +126,17 @@ fluidPage(navbarPage("KickStarter",
                      tabPanel("Fund Amount",
                               sidebarLayout(
                                 sidebarPanel(
-                                  radioButtons(inputId="Rest_state_ID", label="State of the project",
-                                               choices= c("All"="All","failed"="failed", "success"="successful",
-                                                          "cancelled"="canceled","live"="live",
-                                                          "undefined"="undefined","suspened"="suspended"
+                                  radioButtons(inputId="Rest_state_ID", label="Outcome of the project",
+                                               choices= c("All"="All","Failed"="failed", "Success"="successful",
+                                                          "Cancelled"="canceled","Live"="live",
+                                                          "Undefined"="undefined","Suspended"="suspended"
                                                ), selected = "successful"
                                   ),
                                   sliderInput(inputId = "Rest_goal_range_ID",
-                                              label = "Choose a goal range",
+                                              label = "Range for desired amount of funding",
                                               min=0,max=300000,value=10000),
                                   sliderInput(inputId = "Rest_binwidth_ID",
-                                              label = "Choose a binwidth",
+                                              label = "Binwidth for better visualization",
                                               min=0,max=10000,value=500),
                                   selectInput(inputId="Rest_region_ID", 
                                               label=h3("Select country"), 
@@ -156,75 +156,48 @@ fluidPage(navbarPage("KickStarter",
                               sidebarLayout(
                                 sidebarPanel(
                                   radioButtons(inputId="Rest_main_category_state_ID", label="State of the project",
-                                               choices= c("All"="All","failed"="failed", "success"="successful",
-                                                          "cancelled"="canceled","live"="live",
-                                                          "undefined"="undefined","suspened"="suspended"
+                                               choices= c("All"="All","Failed"="failed", "Success"="successful",
+                                                          "Cancelled"="canceled","Live"="live",
+                                                          "Undefined"="undefined","Suspended"="suspended"
                                                ), selected = "successful"
                                   ),
-                                  sliderInput(inputId = "Rest_main_category_observation_ID",
-                                              label = "Choose a category number threshold",
-                                              min=0,max=2000,value=1000),
                                   selectInput(inputId="Rest_main_category_region_ID", 
-                                              label=h3("Select country"), 
+                                              label="Select country", 
                                               choices = c("All"="All",unique((ks18)%>%filter(region!="United States")%>%select(region))), 
-                                              selected ="All")
+                                              selected ="All"),
                                   
-                                ),
+                                  width=2 ),
                                 mainPanel(
-                                  plotlyOutput("Rest_main_US_category_ID")
-                                  #DT::dataTableOutput("US_category_tableID")
+                                  plotlyOutput("Rest_main_US_category_ID"), width= 10
                                 )),
                               DT::dataTableOutput("Rest_main_US_category_tableID")
                      ),
-                     ###category(include subcategory) distribution tab that returns a bar plot
-                     tabPanel("Category and Subcategory Distribution (slow reaction!)",
-                              sidebarLayout(
-                                sidebarPanel(
-                                  radioButtons(inputId="Rest_category_state_ID", label="State of the project",
-                                               choices= c("All"="All","failed"="failed", "success"="successful",
-                                                          "cancelled"="canceled","live"="live",
-                                                          "undefined"="undefined","suspened"="suspended"
-                                               ), selected = "successful"
-                                  ),
-                                  sliderInput(inputId = "Rest_category_observation_ID",
-                                              label = "Choose a category number threshold",
-                                              min=0,max=50000,value=10000),
-                                  selectInput(inputId="Rest_category_region_ID", 
-                                              label=h3("Select country"), 
-                                              choices = c("All"="All",unique((ks18)%>%filter(region!="United States")%>%select(region))), 
-                                              selected ="All")
-                                  
-                                ),
-                                mainPanel(
-                                  plotlyOutput("Rest_US_category_ID")
-                                  #DT::dataTableOutput("US_category_tableID")
-                                )),
-                              DT::dataTableOutput("Rest_US_category_tableID")
-                     ),
-                     ####backers analysis########
+                     ####backers analysis################################
                      tabPanel("Backers Distribution",
                               sidebarLayout(
                                 sidebarPanel(
-                                  radioButtons(inputId="Rest_backers_state_ID", label="State of the project",
-                                               choices= c("All"="All","failed"="failed", "success"="successful",
-                                                          "cancelled"="canceled","live"="live",
-                                                          "undefined"="undefined","suspened"="suspended"
-                                               ), selected = "successful"
-                                  )),
+                                  selectInput("Rest_backers_region_ID", "Top: Choose a country:",
+                                              choices = c("All"="All",unique((ks18)%>%filter(region!="United States")%>%select(region))), 
+                                              selected ="All"),
+                                  selectInput("Rest_backers_category_region_ID", "Bottom: Choose a country for category:",
+                                              choices = c("All"="All",unique((ks18)%>%filter(region!="United States")%>%select(region))), 
+                                              selected ="All"),width=2 ),
                                 mainPanel(
                                   fluidPage(
-                                    plotlyOutput("Rest_US_backers_ID")
-                                    #DT::dataTableOutput("US_category_tableID")
-                                  )
+                                    plotlyOutput("Rest_US_backers_ID"),
+                                    plotlyOutput("Rest_backers_by_category_ID")
+                                    
+                                  ),width=10
                                 )
                               )),
-                     ####unsuccessful project: raised divided by goal#########################################
+                     ####unsuccessful project: raised divided by goal##########################
                      tabPanel("Almost 'Made IT' Project",
+                              titlePanel("These projects were so close to be funded..."),
                               sidebarLayout(
                                 sidebarPanel(
-                                  sliderInput(inputId="Rest_prop_max_ID", label="Choose the max of failure",
+                                  sliderInput(inputId="Rest_prop_max_ID", label="Choose upper bound of percentage founded",
                                               min=0, max=1, value=0.9),
-                                  sliderInput(inputId="Rest_prop_min_ID", label="Choose the base of failure",
+                                  sliderInput(inputId="Rest_prop_min_ID", label="Choose lower bound of percentage founded",
                                               min=0, max=1, value=0.5)
                                 ),
                                 mainPanel(
@@ -236,14 +209,19 @@ fluidPage(navbarPage("KickStarter",
                               
                      ),
                      
-                     ##extremely successful project###########################
+                     ##extremely successful project########################
+                     
                      tabPanel("Extremely Succesful Project",
+                              titlePanel('These projects rasied more than they asked for...'),
                               sidebarLayout(
                                 sidebarPanel(
-                                  sliderInput(inputId="Rest_prop_success_max_ID", label="Choose the minimum of success",
-                                              min=1, max=2000, value=1.2)
-                                  
-                                ),
+                                  sliderInput(inputId="Rest_prop_success_max_ID", label="Choose lower bound of percentage overfunded",
+                                              min=1, max=2000, value=1.2),
+                                  #choice to filter goal less than $10
+                                  selectInput("Rest_sucessful_showone_ID", "Display options",
+                                              choices = c("Hide goal less than $100","Show all")
+                                              
+                                  )),
                                 mainPanel(
                                   fluidPage(
                                     DT::dataTableOutput("Rest_US_successful_ID")
@@ -252,6 +230,9 @@ fluidPage(navbarPage("KickStarter",
                               )
                               
                      ),
+###############word cloud#####################################################    
+                     
+                     
                      tabPanel("Word Cloud",
                               sidebarLayout(
                                 # Sidebar with a slider and selection inputs
@@ -288,7 +269,7 @@ fluidPage(navbarPage("KickStarter",
                       tabPanel("About",
                                fluidRow(
                                  column(6,
-                                        includeMarkdown("test.Rmd")
+                                        includeMarkdown("about.md")
                                  ),
                                  column(3,
                                         img(class="img-polaroid",

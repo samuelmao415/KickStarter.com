@@ -91,9 +91,9 @@ function(input, output, session) {
       group_by(main_category)%>%filter(state == "successful")%>%
       summarize(average_number_of_backers=mean(backers))%>%
       ggplot(aes(reorder(x=main_category,-average_number_of_backers),y=average_number_of_backers))+
-      geom_bar(stat="identity",aes(text=paste("Backers:\n", average_number_of_backers)))
-    
-    ks18%>%filter(region == "United States")
+      geom_bar(stat="identity",aes(text=paste("Backers:\n", average_number_of_backers)))+
+      labs(y="Average number of backers",x="Outcome of the project")
+  
     ggplotly(plotdraft4,tooltip="text")
   })
   
@@ -179,7 +179,8 @@ function(input, output, session) {
       #add a filter option to let user select countries
          {if(input$Rest_region_ID!="All") filter(.,region==input$Rest_region_ID)
      else .}%>%
-      ggplot(aes(x=usd_goal_real))+geom_histogram(binwidth = input$Rest_binwidth_ID)
+      ggplot(aes(x=usd_goal_real))+geom_histogram(binwidth = input$Rest_binwidth_ID)+
+    labs(x="Project goal",y="Number of project",title="Number of projects of desired funding target")
     ggplotly(Rest_plotdraft)})})
   
   #summary for goal given state of the project
@@ -187,7 +188,7 @@ function(input, output, session) {
     Rest_dataset <- Rest_US_reactive()%>%
     {if(input$Rest_state_ID!="All") filter(.,state==input$Rest_state_ID)else .}%>%
     {if(input$Rest_region_ID!="All") filter(.,region==input$Rest_region_ID) else .}%>%
-      select("Summary information for the selected filter"=goal)
+      select("Summary of project funding"=goal)
     summary(Rest_dataset)
   })
   #selected data table given state of the project and the goal
@@ -208,59 +209,27 @@ function(input, output, session) {
     withProgress({
       setProgress(message = "Processing plots...")
       
-      Rest_main_plotdraft2<-Rest_US_reactive()%>%group_by(main_category)%>%{if(input$Rest_main_category_state_ID=="All") . else filter(.,state==input$Rest_main_category_state_ID)}%>%
+      Rest_main_plotdraft2<-Rest_US_reactive()%>%{if(input$Rest_main_category_state_ID=="All") . else filter(.,state==input$Rest_main_category_state_ID)}%>%
       {if(input$Rest_main_category_region_ID!="All") filter(.,region==input$Rest_main_category_region_ID)
-        else .}%>%
-        summarize(num=n())%>%filter(num>input$Rest_main_category_observation_ID)%>%
-        ggplot(aes(x=main_category,y=num))+geom_bar(stat="identity")
+        else .}%>%group_by(main_category,category)%>%
+        ggplot(aes(x=main_category,fill=category))+
+        geom_bar(aes(text=paste("Category:", main_category, "\nSubcategory:", category)))+
+        theme(legend.position="none")+
+        labs(x="Project Category",y="Number of project")
       
-      ggplotly(Rest_main_plotdraft2)})
+      ggplotly(Rest_main_plotdraft2,tooltip="text")})
     
   })
   #selected data table given state of the project and the category
   output$Rest_main_US_category_tableID <-DT::renderDataTable({
-    Rest_main_datatable_category<-Rest_US_reactive()%>%group_by(main_category)%>%mutate(num=n())%>%
-    {if(input$Rest_main_category_state_ID!="All") filter(.,state==input$Rest_main_category_state_ID,
-                                                    num>input$Rest_category_observation_ID) else  .}%>%
+    Rest_main_datatable_category<-Rest_US_reactive()%>%
+    {if(input$Rest_main_category_state_ID!="All") filter(.,state==input$Rest_main_category_state_ID) else  .}%>%
       {if(input$Rest_main_category_region_ID!="All") filter(.,region==input$Rest_main_category_region_ID)
                                                       else .}%>%
       select(ID,name,main_category,category,state,usd_goal_real,region)
     
     DT::datatable(Rest_main_datatable_category)
     
-    
-  })
-  
-  
-  ####main category and subcategory observations######################################################
-  #plot histogram for each category given the state of the project and selected observation
-  
-  Rest_US_category_reactive<-reactive({Rest_US_reactive()%>%group_by(main_category)})
-  
-  output$Rest_US_category_ID<- renderPlotly({
-    withProgress({
-      setProgress(message = "Large dataset. Please wait...")
-      
-      Rest_plotdraft2<-Rest_US_category_reactive()%>%{if(input$Rest_category_state_ID=="All") . else filter(.,state==input$Rest_category_state_ID)}%>%
-      {if(input$Rest_category_region_ID!="All") filter(.,region==input$Rest_category_region_ID)
-        else .}%>%mutate(num=n())%>%
-        filter(num>input$Rest_category_observation_ID)%>%
-        ggplot(aes(x=main_category,y=num,fill=category))+geom_bar(stat="identity")
-      
-      ggplotly(Rest_plotdraft2)})
-    
-  })
-  
-  #selected data table given state of the project and the category
-  output$Rest_US_category_tableID <-DT::renderDataTable({
-    Rest_datatable_category<-Rest_US_category_reactive()%>%group_by(main_category,category)%>%mutate(num=n())%>%
-    {if(input$Rest_category_state_ID!="All") filter(.,state==input$Rest_category_state_ID,
-                                               num>input$Rest_category_observation_ID) else  .}%>%
-        {if(input$Rest_category_region_ID!="All") filter(.,region==input$Rest_category_region_ID)
-                                                 else .}%>%
-      select(ID,name,main_category,category,state,usd_goal_real,region)
-    
-    DT::datatable(Rest_datatable_category)
   })
   
   
@@ -268,31 +237,54 @@ function(input, output, session) {
   
   output$Rest_US_backers_ID<- renderPlotly({
     Rest_plotdraft3<-Rest_US_reactive()%>%
-    {if(input$Rest_backers_state_ID=="All") . else filter(.,state==input$Rest_backers_state_ID)}%>%
       group_by(state)%>%
-      summarize(number_of_backers=mean(backers))%>%
-      ggplot(aes(reorder(x=state,-number_of_backers),y=number_of_backers))+
-      geom_bar(stat="identity")
-    ggplotly(Rest_plotdraft3)
+      {if(input$Rest_backers_region_ID!="All") filter(.,region==input$Rest_backers_region_ID)
+        else .}%>%
+      summarize(average_number_of_backers=mean(backers))%>%
+      ggplot(aes(reorder(x=state,-average_number_of_backers),y=average_number_of_backers))+
+      geom_bar(stat="identity", aes(text=paste("Backers:\n", average_number_of_backers)))+
+      labs(y="Average number of backers",x="Outcome of the project")
+    ggplotly(Rest_plotdraft3,tooltip="text")
   })
+
+  output$Rest_backers_by_category_ID<- renderPlotly({
+    Rest_plotdraft4<-Rest_US_reactive()%>% group_by(main_category)%>%
+    {if(input$Rest_backers_category_region_ID!="All") filter(.,region==input$Rest_backers_category_region_ID)
+      else .}%>%
+  filter(state == "successful")%>%
+      summarize(average_number_of_backers=mean(backers))%>%
+      ggplot(aes(reorder(x=main_category,-average_number_of_backers),y=average_number_of_backers))+
+      geom_bar(stat="identity",aes(text=paste("Backers:\n", average_number_of_backers)))+
+      labs(y="Average number of backers",x="Outcome of the project")
+    
+    
+    ggplotly(Rest_plotdraft4,tooltip="text")
+  })
+  
+  
+  
   
   
   ###almost made it project#########################################################
   output$Rest_US_almost_made_it_ID<-DT::renderDataTable({
-    Rest_datatable_almost<-Rest_US_reactive()%>%mutate(prop=usd_pledged_real/usd_goal_real)%>%
-      filter(prop<input$Rest_prop_max_ID, prop>input$Rest_prop_min_ID)%>%
-      select(ID,name,category,state,goal,prop)
+    Rest_datatable_almost<-Rest_US_reactive()%>%mutate(percent_funded=usd_pledged_real/usd_goal_real*100)%>%
+      filter(percent_funded<input$Rest_prop_max_ID, percent_funded>input$Rest_prop_min_ID)%>%
+      select(ID,name,category,state,usd_goal_real,region,percent_funded)
     
     DT::datatable(Rest_datatable_almost)
   })
   ###extremley successful project#########################################################
+  
   output$Rest_US_successful_ID<-DT::renderDataTable({
-    Rest_datatable_successful<-Rest_US_reactive()%>%mutate(prop=usd_pledged_real/usd_goal_real)%>%
-      filter(prop>input$Rest_prop_success_max_ID)%>%
-      select(ID,name,category,state,goal,prop)
+    Rest_datatable_successful<-Rest_US_reactive()%>%mutate(over_funded=usd_pledged_real/usd_goal_real*100)%>%
+      filter(over_funded>input$Rest_prop_success_max_ID)%>%
+      {if(input$Rest_sucessful_showone_ID!="Show all") filter(.,usd_goal_real>100)
+        else .}%>%
+      select(ID,name,category,state,usd_goal_real,region,over_funded)
     
     DT::datatable(Rest_datatable_successful)
   })
+  
   
   #############word cloud################################################################
   
