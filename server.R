@@ -47,7 +47,7 @@ function(input, output, session) {
   })
 
   
-  ####main category and subcategory observations######################################################
+  ####main category and subcategory observations############
   #plot histogram for each category given the state of the project and selected observation
   
   
@@ -57,10 +57,12 @@ function(input, output, session) {
     
   plotdraft2<-US_reactive()%>%{if(input$category_state_ID=="All") . else filter(.,state==input$category_state_ID)}%>%
     group_by(main_category,category)%>%
-    ggplot(aes(x=main_category,fill=category))+geom_bar()+theme(legend.position="none")+
+    ggplot(aes(x=main_category,fill=category))+
+    geom_bar(aes(text=paste("Category:", main_category, "\nSubcategory:", category)))+
+    theme(legend.position="none")+
     labs(x="Project Category",y="Number of project")
   
-  ggplotly(plotdraft2)})
+  ggplotly(plotdraft2,tooltip="text")})
   
   })
   
@@ -77,28 +79,41 @@ function(input, output, session) {
   
   output$US_backers_ID<- renderPlotly({
     plotdraft3<-US_reactive()%>%
-    {if(input$backers_state_ID=="All") . else filter(.,state==input$backers_state_ID)}%>%
       group_by(state)%>%
-      summarize(number_of_backers=mean(backers))%>%
-      ggplot(aes(reorder(x=state,-number_of_backers),y=number_of_backers))+
-      geom_bar(stat="identity")
-    ggplotly(plotdraft3)
+      summarize(average_number_of_backers=mean(backers))%>%
+      ggplot(aes(reorder(x=state,-average_number_of_backers),y=average_number_of_backers))+
+      geom_bar(stat="identity", aes(text=paste("Backers:\n", average_number_of_backers)))+labs(x="Average number of backers",y="Outcome of the project")
+    ggplotly(plotdraft3,tooltip="text")
   })
+  
+  output$US_backers_by_category_ID<- renderPlotly({
+    plotdraft4<-US_reactive()%>%
+      group_by(main_category)%>%filter(state == "successful")%>%
+      summarize(average_number_of_backers=mean(backers))%>%
+      ggplot(aes(reorder(x=main_category,-average_number_of_backers),y=average_number_of_backers))+
+      geom_bar(stat="identity",aes(text=paste("Backers:\n", average_number_of_backers)))
+    
+    ks18%>%filter(region == "United States")
+    ggplotly(plotdraft4,tooltip="text")
+  })
+  
   
   
   ###almost made it project#########################################################
   output$US_almost_made_it_ID<-DT::renderDataTable({
-  datatable_almost<-US_reactive()%>%mutate(prop=pledged/goal)%>%
-    filter(prop<input$prop_max_ID, prop>input$prop_min_ID)%>%
-    select(ID,name,category,state,goal,prop)
+  datatable_almost<-US_reactive()%>%mutate(percent_funded=pledged/goal*100)%>%
+    filter(percent_funded<input$prop_max_ID, percent_funded>input$prop_min_ID)%>%
+    select(ID,name,category,state,goal,percent_funded)
   
   DT::datatable(datatable_almost)
   })
   ###extremley successful project#########################################################
   output$US_successful_ID<-DT::renderDataTable({
-    datatable_successful<-US_reactive()%>%mutate(prop=pledged/goal)%>%
-      filter(prop>input$prop_success_max_ID)%>%
-      select(ID,name,category,state,goal,prop)
+    datatable_successful<-US_reactive()%>%mutate(over_funded=pledged/goal*100)%>%
+      filter(over_funded>input$prop_success_max_ID)%>%
+      {if(input$sucessful_showone_ID!="Show all") filter(.,goal>100)
+        else .}%>%
+      select(ID,name,category,state,goal,over_funded)
     
     DT::datatable(datatable_successful)
   })

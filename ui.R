@@ -49,34 +49,25 @@ fluidPage(navbarPage("KickStarter",
                       ),
                       mainPanel(
                         plotlyOutput("US_category_ID"),width= 10
-                        #DT::dataTableOutput("US_category_tableID")
                         )),
                     DT::dataTableOutput("US_category_tableID")
                     ),
           ####backers analysis########
           tabPanel("Backers Distribution",
                    sidebarLayout(
-                     sidebarPanel(
-                       radioButtons(inputId="backers_state_ID", label="State of the project",
-                                    choices= c("All"="All","failed"="failed", "success"="successful",
-                                               "cancelled"="canceled","live"="live",
-                                               "undefined"="undefined","suspened"="suspended"
-                                    ), selected = "successful"
+                         plotlyOutput("US_backers_ID"),
+                         plotlyOutput("US_backers_by_category_ID")
                        )),
-                     mainPanel(
-                       fluidPage(
-                         plotlyOutput("US_backers_ID")
-                         #DT::dataTableOutput("US_category_tableID")
-                       )
-                     )
-           )),
-          ####unsuccessful project: raised divided by goal#########################################
+                   
+          ####almost made it project: raised divided by goal#########################################
           tabPanel("Almost 'Made IT' Project",
+                   titlePanel('These projects were so close to be funded...'),
                    sidebarLayout(
+                     
                      sidebarPanel(
-                       sliderInput(inputId="prop_max_ID", label="Choose the max of failure",
+                       sliderInput(inputId="prop_max_ID", label="Choose upper bound of percentage funded",
                                    min=0, max=1, value=0.9),
-                       sliderInput(inputId="prop_min_ID", label="Choose the base of failure",
+                       sliderInput(inputId="prop_min_ID", label="Choose the lower bound of percentage funded",
                                    min=0, max=1, value=0.5)
                      ),
                      mainPanel(
@@ -90,12 +81,16 @@ fluidPage(navbarPage("KickStarter",
           
           ##extremely successful project###########################
           tabPanel("Extremely Succesful Project",
+                   titlePanel('These projects rasied more than they asked for...'),
                    sidebarLayout(
                      sidebarPanel(
-                       sliderInput(inputId="prop_success_max_ID", label="Choose the minimum of success",
-                                   min=1, max=2000, value=1.2)
+                       sliderInput(inputId="prop_success_max_ID", label="Choose lower bound of percentage overfunded",
+                                   min=1, max=2000, value=1.2),
+                       #choice to filter goal less than $10
+                       selectInput("sucessful_showone_ID", "Display options",
+                                   choices = c("Hide goal less than $100","Show all")
                  
-                     ),
+                     )),
                      mainPanel(
                        fluidPage(
                          DT::dataTableOutput("US_successful_ID")
