@@ -112,7 +112,7 @@ function(input, output, session) {
     datatable_successful<-US_reactive()%>%mutate(over_funded=pledged/goal*100)%>%
       filter(over_funded>input$prop_success_max_ID)%>%
       {if(input$sucessful_showone_ID!="Show all") filter(.,goal>100)
-        else .}%>%
+        else .}%>%filter(state=="successful")%>%
       select(ID,name,category,state,goal,over_funded)
     
     DT::datatable(datatable_successful)
@@ -279,7 +279,7 @@ function(input, output, session) {
     Rest_datatable_successful<-Rest_US_reactive()%>%mutate(over_funded=usd_pledged_real/usd_goal_real*100)%>%
       filter(over_funded>input$Rest_prop_success_max_ID)%>%
       {if(input$Rest_sucessful_showone_ID!="Show all") filter(.,usd_goal_real>100)
-        else .}%>%
+        else .}%>%filter(state=="successful")%>%
       select(ID,name,category,state,usd_goal_real,region,over_funded)
     
     DT::datatable(Rest_datatable_successful)

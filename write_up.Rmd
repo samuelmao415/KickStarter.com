@@ -1,0 +1,76 @@
+---
+title: "Write-up"
+author: "samuel mao"
+date: "July 25, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(data.table)
+library(shiny)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(markdown)
+library(leaflet)
+library(shinydashboard)
+library(tm)
+library(SnowballC)
+library(wordcloud)
+library(RColorBrewer)
+library(wesanderson)
+library(ggthemes)
+library(gridExtra)
+#setwd("C:/Users/samuelmao/Desktop/DataScience/Project1/Project1")
+#read data into global.R
+ks18<-fread(file = "./ks18.csv",sep = ',',fill=TRUE)
+bycountry<-fread(file="./bycountry.csv")
+
+```
+
+## Kickstarter project overview
+
+The project aims to give audience a general idea of:
+
+*  What are some of the most sucessful ideas on Kickstarter?
+*  What are the ideas that almost got funded but missed the target goal?
+*  Where are the ideas located?
+*  Is there a difference in terms of the projects listed in the United States versus other countries (e.g.: Japan)?
+* What are the most frequent project name throughout each category and across the continent?
+* How much funding do projects across the platform ask for? 
+* What are the categories that are more likely to be funded and as well as what are some of the most popular category across the world?
+
+Once these questions can be answered, these are the potential follow-up questions that can be asked and answered:
+
+* What are the factors (funding goal, project title, country, or category) that play the most significant aspects determining a project's funding outcome?
+* What are the similaries of projects across category and continent?
+* What are the characteristics of some of the most sucessful projects?
+
+I believe answering these questions can help an artist, an innovator, an activitist or an writer to better target their ideas to the users on Kickstarter, and Kickstart can improve users experience and grow audience both within the US and without accordingly.
+
+More information about Kickstart is here:<http://rmarkdown.rstudio.com> .
+The data for this project is from Kaggle collected by Mickaël Mouillé from mid 2011 to early 2018: <https://www.kaggle.com/kemical/kickstarter-projects>
+
+#Users on Kickstart
+There are almost 300,000 projects listed in the United States, comparing to a total number of 378,611 records in our collected databse. It represents a significant portion on the Kickstarter. The contries that follow behind are UK and Canada, both English speaking countries. In fact, a quick glance of 21 countries that have projects listed, 7 of them are English-speaking countries and region (including Singapore and Hong Kong). African countires are noticetably missing from the map as well as countires such as China and India. However, there are around 7000 projects (equivalent to the number of projects from Austria) where the country is not identified. This could be due to either a mistake from the webscrapping or because the country was simply not provided by the user.
+
+
+```{r echo=FALSE, results='hide',message=FALSE}
+leaflet(bycountry) %>% 
+      addProviderTiles("Esri.NatGeoWorldMap")%>%addCircleMarkers(~longitude,~latitude,
+                                                                 radius=0.075*sqrt(bycountry$num),
+                                    label=paste0(bycountry$region,': ',bycountry$num, ' projects'),
+                                   fillOpacity = 0.3, color = '#D55E00')
+```
+
+#United States, Fund amount:
+
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
