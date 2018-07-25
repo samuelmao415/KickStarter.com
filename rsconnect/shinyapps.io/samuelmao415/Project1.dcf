@@ -5,8 +5,8 @@ account: samuelmao415
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 385443
-bundleId: 1493059
+bundleId: 1498414
 url: https://samuelmao415.shinyapps.io/Project1/
-when: 1532211425.9458
+when: 1532492498.96727
 asMultiple: FALSE
 asStatic: FALSE
