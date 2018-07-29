@@ -2,6 +2,7 @@
 library(data.table)
 library(shiny)
 library(dplyr)
+library(tidyr)
 library(ggplot2)
 library(plotly)
 library(markdown)
@@ -18,3 +19,9 @@ library(gridExtra)
 #read data into global.R
 ks18<-fread(file = "./ks18.csv",sep = ',',fill=TRUE)
 bycountry<-fread(file="./bycountry.csv")
+withoutlive<-ks18%>%filter(state!="live",region=="United States")%>%group_by(main_category)%>%summarize(rate=sum(state=="successful")/n())
+successful_scatter<-ks18%>%filter(state!="live",region=="United States")%>%group_by(main_category)%>%summarize(projects=n(),successful_projects=sum(state=="successful"))
+
+piedata<-ks18%>%summarise(US_Observation=sum(region=="United States"), Rest_Observation=sum(region!="United States"))
+piedata2<-gather(piedata,key=region,value=observation, US_Observation,Rest_Observation)
+

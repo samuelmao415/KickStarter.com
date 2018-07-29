@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(data.table)
 library(shiny)
 library(dplyr)
+library(tidyr)
 library(ggplot2)
 library(plotly)
 library(markdown)
@@ -26,43 +27,41 @@ library(gridExtra)
 #read data into global.R
 ks18<-fread(file = "./ks18.csv",sep = ',',fill=TRUE)
 bycountry<-fread(file="./bycountry.csv")
+withoutlive<-ks18%>%filter(state!="live",region=="United States")%>%group_by(main_category)%>%summarize(rate=sum(state=="successful")/n())
+successful_scatter<-ks18%>%filter(state!="live",region=="United States")%>%group_by(main_category)%>%summarize(projects=n(),successful_projects=sum(state=="successful"))
+
+piedata<-ks18%>%summarise(US_Observation=sum(region=="United States"), Rest_Observation=sum(region!="United States"))
+piedata2<-gather(piedata,key=region,value=observation, US_Observation,Rest_Observation)
+
 
 ```
 
 ## Kickstarter project overview
 
-The project aims to give audience a general idea of:
+Kickstarter is essentially an online market that has both creator and supporter. For an online market to grow, one of the most important feature that cannot be ignored is the "Network effect". This means that Kickstarter needs to grow both its number of creators and number of supportors. A creator is someone or some company that has an idea that needs funding to let it come to fruition. A supporter is an online user on the Kickstarter who decides to contribute his or her money for the project created by the creator. Because Kickstarter makes money when a project is successfully funded (5% of the money funded goes to the platform according to Investopedia), it is very important for Kickstarter to make sure a creator's project meets the funding goal. Therefore, the aim of this project is to help both creator and the platform to increase success rate and therefore revenue by answering questions such as:
 
-*  What are some of the most sucessful ideas on Kickstarter?
-*  What are the ideas that almost got funded but missed the target goal?
-*  Where are the ideas located?
-*  Is there a difference in terms of the projects listed in the United States versus other countries (e.g.: Japan)?
-* What are the most frequent project name throughout each category and across the continent?
-* How much funding do projects across the platform ask for? 
-* What are the categories that are more likely to be funded and as well as what are some of the most popular category across the world?
+* Which category has the highest success rato by date?
+* Which category has the most project listed?
+* What are the common themes in project names for each category?
+* How much does a project ask for, and whether if the amount asked would influence the outcome
+* How many projects are listed from outside of United States, and what are those projects like?
 
-Once these questions can be answered, these are the potential follow-up questions that can be asked and answered:
+Once these fundamental questions can be answered, further machine learning techinique could help unearth information such as:
 
-* What are the factors (funding goal, project title, country, or category) that play the most significant aspects determining a project's funding outcome?
-* What are the similaries of projects across category and continent?
-* What are the characteristics of some of the most sucessful projects?
+* What are the similarities between successful project and unsuccessful project?
+* What are the similiarities of projects within a cateogry and across category?
+* What are the main factors that influence a project outcome?
 
-I believe answering these questions can help an artist, an innovator, an activitist or an writer to better target their ideas to the users on Kickstarter, and Kickstart can improve users experience and grow audience both within the US and without accordingly.
+There are some key information for each project that are not recorded by the dataset, such as the project information provided by the creator under their project page. The design of each project page could usually influence a supporter's decision. However, the current dataset contains 16 columns and more than 300,000 records by date, and thus the dataset is rich enough to dig up some key insights.
 
 More information about Kickstart is here:<http://rmarkdown.rstudio.com> .
 The data for this project is from Kaggle collected by Mickaël Mouillé from mid 2011 to early 2018: <https://www.kaggle.com/kemical/kickstarter-projects>
 
 #Users on Kickstart
-There are almost 300,000 projects listed in the United States, comparing to a total number of 378,611 records in our collected databse. It represents a significant portion on the Kickstarter. The contries that follow behind are UK and Canada, both English speaking countries. In fact, a quick glance of 21 countries that have projects listed, 7 of them are English-speaking countries and region (including Singapore and Hong Kong). African countires are noticetably missing from the map as well as countires such as China and India. However, there are around 7000 projects (equivalent to the number of projects from Austria) where the country is not identified. This could be due to either a mistake from the webscrapping or because the country was simply not provided by the user.
+There are almost 300,000 projects listed in the United States, comparing to a total number of 378,611 records in our collected databse. It represents a significant portion on the Kickstarter. The contries that follow behind are UK and Canada, both English speaking countries. In
 
 
-```{r echo=FALSE, results='hide',message=FALSE}
-leaflet(bycountry) %>% 
-      addProviderTiles("Esri.NatGeoWorldMap")%>%addCircleMarkers(~longitude,~latitude,
-                                                                 radius=0.075*sqrt(bycountry$num),
-                                    label=paste0(bycountry$region,': ',bycountry$num, ' projects'),
-                                   fillOpacity = 0.3, color = '#D55E00')
-```
+
 
 #United States, Fund amount:
 

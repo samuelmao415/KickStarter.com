@@ -1,15 +1,35 @@
 
         #name of the project
 fluidPage(navbarPage("KickStarter",
+                    tabPanel("Report",
+                             fluidRow(
+                               column(6,
+                              htmlOutput("inc")),
+                              column(3,
+                                     img(class="img-polaroid",
+                                       src = "kickstarter2.png")))
+                     ), 
             #####name of the tab
            tabPanel("World Map", 
                     fluidPage(
-                 leafletOutput("worldmap_plotID")
+                      sidebarLayout(
+                        sidebarPanel(plotlyOutput("pie_plotID"),width=3,height=2),
+                      mainPanel(
+                 leafletOutput("worldmap_plotID"))
+                 
                     )
-           ),
+           )),
            ####Create a main tab of United Staes 
            navbarMenu("United States",
                         #sub panel under United States
+                    ####successful rate analysis########
+              tabPanel("Successful Rate",
+                               fluidPage(
+                                 plotlyOutput("US_scatterplot_ID"),
+                                 plotlyOutput("US_success_rate_ID")
+                                 
+                               )),
+                      
               tabPanel("Fund Amount",
                     sidebarLayout(
                       sidebarPanel(
@@ -19,9 +39,15 @@ fluidPage(navbarPage("KickStarter",
                                        "Undefined"="undefined","Suspended"="suspended"
                                        ), selected = "successful"
                         ),
+                        selectInput(inputId="category_under_goal_ID", label="Choose a category:",
+                                    choices = c("All"="All",unique((ks18)%>%filter(region=="United States")%>%select(main_category))), 
+                                    selected ="All"),
                         sliderInput(inputId = "goal_range_ID",
-                                       label = "Range for desired amount of funding",
+                                       label = "Upper limit of desired amount of funding",
                                        min=0,max=300000,value=10000),
+                        sliderInput(inputId = "min_goal_range_ID",
+                                    label = "Lower limit of desired amount of funding",
+                                    min=0,max=300000,value=0),
                         sliderInput(inputId = "binwidth_ID",
                                     label = "Binwidth for better visualization",
                                     min=0,max=10000,value=500),
@@ -36,7 +62,7 @@ fluidPage(navbarPage("KickStarter",
            ,
   
           ###category(include subcategory) distribution tab that returns a bar plot
-              tabPanel("Category and Subcategory Distribution",
+              tabPanel("Category Distribution",
                     sidebarLayout(
                       sidebarPanel(
                         radioButtons(inputId="category_state_ID", label="Outcome of the listed project",
@@ -51,7 +77,10 @@ fluidPage(navbarPage("KickStarter",
                         plotlyOutput("US_category_ID"),width= 10
                         )),
                     DT::dataTableOutput("US_category_tableID")
-                    ),
+                    ), 
+          
+          
+         
           ####backers analysis########
           tabPanel("Backers Distribution",
                    sidebarLayout(
@@ -101,7 +130,7 @@ fluidPage(navbarPage("KickStarter",
           ),
           tabPanel("Word Cloud",
                    sidebarLayout(
-                     # Sidebar with a slider and selection inputs
+                     # Sidebar with a slider and selection inputs wordcloud_state_ID
                      sidebarPanel(
                        selectInput("wordcloud_category_ID", "Choose a category:",
                                    choices = unique(ks18$main_category)),
@@ -110,12 +139,18 @@ fluidPage(navbarPage("KickStarter",
                                    min = 1,  max = 100, value = 20),
                        sliderInput("max_ID",
                                    "Maximum Number of Words:",
-                                   min = 1,  max = 300,  value = 100)
+                                   min = 1,  max = 300,  value = 100),
+                       radioButtons(inputId="wordcloud_state_ID", label="Outcome of the listed project",
+                                    choices= c("All"="All","Failed"="failed", "Success"="successful",
+                                               "Cancelled"="canceled","Live"="live",
+                                               "Undefined"="undefined","Suspended"="suspended"
+                                    ), selected = "All"
+                       )
                      ),
                      
                      # Show Word Cloud
                      mainPanel(
-                       imageOutput("word_cloud_plot_ID", width = "100%", height = "500px")
+                       imageOutput("word_cloud_plot_ID")
                      )
                    ))),
           
@@ -123,6 +158,23 @@ fluidPage(navbarPage("KickStarter",
           ########Rest of the world##################################################
           ########Rest of the world##################################################
           navbarMenu("Rest of the world",
+                     tabPanel("Successful Rate",
+                                sidebarLayout(
+                                  sidebarPanel(
+                                    selectInput(inputId="Rest_success_rate_ID", 
+                                                label=h3("Select country for bar plot"), 
+                                                choices = c("All"="All",unique((ks18)%>%filter(region!="United States")%>%select(region))), 
+                                                selected ="All"),
+                                  selectInput(inputId="Rest_scatter_ID", 
+                                              label=h3("Select country for scatter plot"), 
+                                              choices = c("All"="All",unique((ks18)%>%filter(region!="United States")%>%select(region))), 
+                                              selected ="All"),width = 2),
+                                  mainPanel(
+                                    fluidPage(
+                                plotlyOutput("Rest_US_success_rate_ID"),
+                                plotlyOutput("Rest_US_scatterplot_ID"))
+                                
+                              ))),
                      tabPanel("Fund Amount",
                               sidebarLayout(
                                 sidebarPanel(
@@ -133,14 +185,20 @@ fluidPage(navbarPage("KickStarter",
                                                ), selected = "successful"
                                   ),
                                   sliderInput(inputId = "Rest_goal_range_ID",
-                                              label = "Range for desired amount of funding",
+                                              label = "Upper limit of desired amount of funding",
                                               min=0,max=300000,value=10000),
+                                  sliderInput(inputId = "Rest_min_goal_range_ID",
+                                              label = "Lower limit of desired amount of funding",
+                                              min=0,max=300000,value=0),
                                   sliderInput(inputId = "Rest_binwidth_ID",
                                               label = "Binwidth for better visualization",
                                               min=0,max=10000,value=500),
                                   selectInput(inputId="Rest_region_ID", 
                                               label=h3("Select country"), 
                                               choices = c("All"="All",unique((ks18)%>%filter(region!="United States")%>%select(region))), 
+                                              selected ="All"),
+                                  selectInput(inputId="Rest_category_under_goal_ID", label="Choose a category:",
+                                              choices = c("All"="All",unique((ks18)%>%filter(region!="United States")%>%select(main_category))), 
                                               selected ="All"),
                                   verbatimTextOutput("Rest_summary_ID")
                                 ),
@@ -239,6 +297,11 @@ fluidPage(navbarPage("KickStarter",
                                 sidebarPanel(
                                   selectInput("Rest_wordcloud_category_ID", "Choose a category:",
                                               choices = unique(ks18%>%filter(region!="United States")%>%select(main_category))),
+                                  radioButtons(inputId="Rest_wordcloud_state_ID", label="Outcome of the listed project",
+                                               choices= c("All"="All","Failed"="failed", "Success"="successful",
+                                                          "Cancelled"="canceled","Live"="live",
+                                                          "Undefined"="undefined","Suspended"="suspended"
+                                               ), selected = "All"),
                                   selectInput("Rest_word_cloud_region_ID", "Choose a country:",
                                               choices = c("All"="All",unique((ks18)%>%filter(region!="United States")%>%select(region))), 
                                               selected ="All"),
@@ -261,30 +324,9 @@ fluidPage(navbarPage("KickStarter",
           ####################################################
            tabPanel("Data",
                     DT::dataTableOutput("tableID")
-           ),
+           )
           
           ##############################################
-          
-           navbarMenu("More",
-                      tabPanel("About",
-                               fluidRow(
-                                 column(6,
-                                        includeMarkdown("about.md")
-                                 ),
-                                 column(3,
-                                        img(class="img-polaroid",
-                                            src=paste0("http://upload.wikimedia.org/",
-                                                       "wikipedia/commons/9/92/",
-                                                       "1919_Ford_Model_T_Highboy_Coupe.jpg")),
-                                        tags$small(
-                                          "Source: Photographed at the Bay State Antique ",
-                                          "Automobile Club's July 10, 2005 show at the ",
-                                          "Endicott Estate in Dedham, MA by ",
-                                          a(href="http://commons.wikimedia.org/wiki/User:Sfoskett",
-                                            "User:Sfoskett")
-                                        )
-                                 )
-                               )
-                      )
-           )))
+        
+        ))
           
