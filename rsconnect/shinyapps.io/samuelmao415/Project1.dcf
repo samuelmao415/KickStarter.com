@@ -5,8 +5,9 @@ account: samuelmao415
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 385443
-bundleId: 1499467
+bundleId: 1506278
 url: https://samuelmao415.shinyapps.io/Project1/
-when: 1532526866.9378
+when: 1532900791.46224
 asMultiple: FALSE
 asStatic: FALSE
+ignoredFiles: test.Rmd|write_up.html|write_up.Rmd
